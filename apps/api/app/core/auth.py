@@ -20,6 +20,8 @@ async def get_current_user(
             detail="Authentication required",
         )
 
+    session_token = session_token.split(".", 1)[0]
+
     result = await db.execute(
         text(
             """
