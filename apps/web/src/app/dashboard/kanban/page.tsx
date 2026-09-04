@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import { getJobs, type Job } from "@/lib/jobs-api";
-import { JOB_STATUSES, type JobStatus } from "@/lib/job-types";
+import { useRouter } from "next/navigation";
+import {
+  getJobs,
+  updateJob,
+  type Job,
+} from "@/lib/jobs-api";
+import {
+  JOB_STATUSES,
+  type JobStatus,
+} from "@/lib/job-types";
 
 const STATUS_LABELS: Record<JobStatus, string> = {
   saved: "Saved",
@@ -15,6 +22,8 @@ const STATUS_LABELS: Record<JobStatus, string> = {
 };
 
 export default function KanbanPage() {
+  const router = useRouter();
+
   const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,10 +31,10 @@ export default function KanbanPage() {
   useEffect(() => {
     async function loadJobs() {
       try {
+        setIsLoading(true);
         setError(null);
 
         const data = await getJobs();
-
         setJobs(data);
       } catch (err) {
         setError(
@@ -41,101 +50,162 @@ export default function KanbanPage() {
     void loadJobs();
   }, []);
 
+  async function handleStatusChange(
+    jobId: string,
+    newStatus: JobStatus,
+  ) {
+    try {
+      setError(null);
+
+      const updatedJob = await updateJob(jobId, {
+        status: newStatus,
+      });
+
+      setJobs((currentJobs) =>
+        currentJobs.map((job) =>
+          job.id === jobId ? updatedJob : job,
+        ),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to update job status.",
+      );
+    }
+  }
+
   if (isLoading) {
     return (
-      <main className="p-8">
-        <h1 className="text-2xl font-semibold">Kanban</h1>
-        <p className="mt-4 text-muted-foreground">
-          Loading jobs...
-        </p>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main className="p-8">
-        <h1 className="text-2xl font-semibold">Kanban</h1>
-        <p className="mt-4 text-destructive">{error}</p>
+      <main className="p-6">
+        <p>Loading jobs...</p>
       </main>
     );
   }
 
   return (
-    <main className="p-8">
-      <div>
-        <h1 className="text-2xl font-semibold">Kanban</h1>
-        <p className="mt-1 text-muted-foreground">
-          Manage your job applications by status.
-        </p>
+    <main className="p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">
+            Application Board
+          </h1>
+
+          <p className="text-sm text-gray-500">
+            Manage your applications by status.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard/jobs")}
+          className="rounded border px-4 py-2 text-sm"
+        >
+          List View
+        </button>
       </div>
 
-      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {JOB_STATUSES.map((status) => (
-          <KanbanColumn
-            key={status}
-            status={status}
-            jobs={jobs}
-          />
-        ))}
+      {error && (
+        <div className="mb-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {JOB_STATUSES.map((status) => {
+          const statusJobs = jobs.filter(
+            (job) => job.status === status,
+          );
+
+          return (
+            <section
+              key={status}
+              className="min-h-64 rounded-lg border bg-gray-50 p-4"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-semibold">
+                  {STATUS_LABELS[status]}
+                </h2>
+
+                <span className="rounded-full bg-white px-2 py-1 text-xs">
+                  {statusJobs.length}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {statusJobs.length === 0 ? (
+                  <p className="text-sm text-gray-400">
+                    No applications
+                  </p>
+                ) : (
+                  statusJobs.map((job) => (
+                    <article
+                      key={job.id}
+                      className="rounded-lg border bg-white p-4 shadow-sm"
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/jobs/${job.id}`,
+                          )
+                        }
+                        className="text-left"
+                      >
+                        <h3 className="font-medium hover:underline">
+                          {job.title}
+                        </h3>
+
+                        <p className="text-sm text-gray-600">
+                          {job.company}
+                        </p>
+
+                        {job.location && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            {job.location}
+                          </p>
+                        )}
+                      </button>
+
+                      <div className="mt-4">
+                        <label
+                          htmlFor={`status-${job.id}`}
+                          className="mb-1 block text-xs text-gray-500"
+                        >
+                          Change status
+                        </label>
+
+                        <select
+                          id={`status-${job.id}`}
+                          value={job.status}
+                          onChange={(event) =>
+                            void handleStatusChange(
+                              job.id,
+                              event.target.value as JobStatus,
+                            )
+                          }
+                          className="w-full rounded border px-2 py-1 text-sm"
+                        >
+                          {JOB_STATUSES.map(
+                            (option) => (
+                              <option
+                                key={option}
+                                value={option}
+                              >
+                                {STATUS_LABELS[option]}
+                              </option>
+                            ),
+                          )}
+                        </select>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </section>
+          );
+        })}
       </div>
     </main>
-  );
-}
-
-interface KanbanColumnProps {
-  status: JobStatus;
-  jobs: Job[];
-}
-
-function KanbanColumn({
-  status,
-  jobs,
-}: KanbanColumnProps) {
-  const jobsForStatus = jobs.filter(
-    (job) => job.status === status,
-  );
-
-  return (
-    <section className="min-h-[500px] rounded-lg border bg-muted/30 p-4">
-      <div className="flex items-center justify-between">
-        <h2 className="font-semibold">
-          {STATUS_LABELS[status]}
-        </h2>
-
-        <span className="rounded-full border px-2 py-1 text-xs">
-          {jobsForStatus.length}
-        </span>
-      </div>
-
-      <div className="mt-4 min-h-[420px] space-y-3">
-        {jobsForStatus.length === 0 ? (
-          <div className="rounded-md border border-dashed p-4">
-            <p className="text-center text-sm text-muted-foreground">
-              No jobs
-            </p>
-          </div>
-        ) : (
-          jobsForStatus.map((job) => (
-            <article
-              key={job.id}
-              className="rounded-md border bg-background p-4 shadow-sm"
-            >
-              <h3 className="font-medium">{job.title}</h3>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                {job.company}
-              </p>
-
-              {job.location && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {job.location}
-                </p>
-              )}
-            </article>
-          ))
-        )}
-      </div>
-    </section>
   );
 }

@@ -19,6 +19,8 @@ COPY apps/web ./apps/web
 
 ARG NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ARG DATABASE_URL=postgresql://careeros:change_this_password@postgres:5432/careeros
+ENV DATABASE_URL=$DATABASE_URL
 ENV NEXT_TELEMETRY_DISABLED=1
 
 # Build
@@ -38,9 +40,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 COPY --from=builder /app/apps/web/.next/standalone ./
 COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
-
-# Only copy public if it exists
-COPY --from=builder /app/apps/web/public ./apps/web/public
 
 EXPOSE 3000
 

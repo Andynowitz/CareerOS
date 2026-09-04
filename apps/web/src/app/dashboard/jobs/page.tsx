@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import {
   getJobs,
@@ -53,6 +54,8 @@ export default function JobsPage() {
   const [sortOption, setSortOption] =
     useState<SortOption>("newest");
 
+  const router = useRouter();
+  
   async function loadJobs() {
     try {
       setError(null);
@@ -349,6 +352,16 @@ export default function JobsPage() {
               )}
 
               <div className="mt-5 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    router.push(`/dashboard/jobs/${job.id}`)
+                  }
+                  className="rounded border px-3 py-1 text-sm"
+                >
+                  View
+                </button>
+
                 <button
                   type="button"
                   className="rounded-md border px-3 py-2 text-sm"
