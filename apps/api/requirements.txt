@@ -15,3 +15,7 @@ uvicorn[standard]==0.35.0
 pytest
 pytest-asyncio
 httpx
+minio
+pypdf
+python-docx
+python-multipart==0.0.20
