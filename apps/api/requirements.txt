@@ -19,3 +19,4 @@ minio
 pypdf
 python-docx
 python-multipart==0.0.20
+openai

@@ -18,6 +18,8 @@ from app.schemas.resume import ResumeDetailResponse, ResumeResponse
 from app.schemas.user import CurrentUserResponse
 from app.services.resume_parser import ResumeParserError, parse_resume
 from app.services.resume_storage import ResumeStorage, ResumeStorageError
+from app.repositories.resume_analysis import ResumeAnalysisRepository
+from app.schemas.resume_analysis import ResumeAnalysisResponse
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -121,6 +123,45 @@ async def list_resumes(
     )
 
     return list(result.scalars().all())
+
+
+@router.post(
+    "/{resume_id}/analysis",
+    response_model=ResumeAnalysisResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def analyze_resume(
+    resume_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> ResumeAnalysisResponse:
+    resume = await get_resume_or_404(
+        session,
+        resume_id,
+        current_user.id,
+    )
+
+    if not resume.extracted_text:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Resume has no extracted text to analyze",
+        )
+
+    client = AIClient()
+    analyzer = ResumeAnalyzer(client)
+    repository = ResumeAnalysisRepository(session)
+
+    service = ResumeAnalysisService(
+        analyzer=analyzer,
+        repository=repository,
+    )
+
+    analysis = await service.analyze_resume(
+        resume_id=resume.id,
+        resume_text=resume.extracted_text,
+    )
+
+    return ResumeAnalysisResponse.model_validate(analysis)
 
 
 @router.get("/{resume_id}", response_model=ResumeDetailResponse)
@@ -416,3 +457,33 @@ async def delete_resume(
 
     await session.delete(resume)
     await session.commit()
+
+
+@router.get(
+    "/{resume_id}/analysis",
+    response_model=ResumeAnalysisResponse,
+)
+async def get_resume_analysis(
+    resume_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> ResumeAnalysisResponse:
+    resume = await get_resume_or_404(
+        session,
+        resume_id,
+        current_user.id,
+    )
+
+    analysis_repository = ResumeAnalysisRepository(session)
+
+    analysis = await analysis_repository.get_latest_for_resume(
+        resume.id,
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume analysis not found",
+        )
+
+    return ResumeAnalysisResponse.model_validate(analysis)

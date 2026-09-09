@@ -11,6 +11,11 @@ from app.repositories.job import JobRepository
 from app.repositories.job_activity import JobActivityRepository
 from app.schemas.job import JobCreate, JobResponse, JobUpdate
 from app.schemas.user import CurrentUserResponse
+from app.repositories.job_analysis import JobAnalysisRepository
+from app.schemas.job_analysis import JobAnalysisResponse
+from app.ai.analyzers.job_analyzer import JobAnalyzer
+from app.ai.client import AIClient
+from app.services.job_analysis import JobAnalysisService
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -187,3 +192,85 @@ async def delete_job(
         )
 
     await repository.delete(job)
+
+@router.get(
+    "/{job_id}/analysis",
+    response_model=JobAnalysisResponse,
+)
+async def get_job_analysis(
+    job_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> JobAnalysisResponse:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    analysis_repository = JobAnalysisRepository(session)
+
+    analysis = await analysis_repository.get_latest_for_job(
+        job.id,
+    )
+
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job analysis not found",
+        )
+
+    return JobAnalysisResponse.model_validate(analysis)
+
+
+@router.post(
+    "/{job_id}/analysis",
+    response_model=JobAnalysisResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def analyze_job(
+    job_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> JobAnalysisResponse:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    if not job.description:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job has no description to analyze",
+        )
+
+    client = AIClient()
+    analyzer = JobAnalyzer(client)
+    repository = JobAnalysisRepository(session)
+
+    service = JobAnalysisService(
+        analyzer=analyzer,
+        repository=repository,
+    )
+
+    analysis = await service.analyze_job(
+        job_id=job.id,
+        job_description=job.description,
+    )
+
+    return JobAnalysisResponse.model_validate(analysis)
