@@ -16,6 +16,10 @@ from app.schemas.job_analysis import JobAnalysisResponse
 from app.ai.analyzers.job_analyzer import JobAnalyzer
 from app.ai.client import AIClient
 from app.services.job_analysis import JobAnalysisService
+from app.schemas.analysis_task import AnalysisTaskResponse
+from app.tasks.job_analysis import analyze_job_task
+from celery.result import AsyncResult
+from app.tasks.celery_app import celery_app
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -232,10 +236,76 @@ async def get_job_analysis(
 
 @router.post(
     "/{job_id}/analysis",
-    response_model=JobAnalysisResponse,
-    status_code=status.HTTP_201_CREATED,
+    response_model=AnalysisTaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
 )
 async def analyze_job(
+    job_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> AnalysisTaskResponse:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    if not job.description or not job.description.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job has no description to analyze",
+        )
+
+    task = analyze_job_task.delay(str(job.id))
+
+    return AnalysisTaskResponse(
+        task_id=task.id,
+        status="queued",
+    )
+
+@router.get(
+    "/{job_id}/analysis/status/{task_id}",
+    response_model=AnalysisTaskResponse,
+)
+async def get_analysis_status(
+    job_id: UUID,
+    task_id: str,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> AnalysisTaskResponse:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    task = AsyncResult(task_id, app=celery_app)
+
+    return AnalysisTaskResponse(
+        task_id=task_id,
+        status=task.status,
+    )
+
+
+@router.get(
+    "/{job_id}/analysis",
+    response_model=JobAnalysisResponse,
+)
+async def get_job_analysis(
     job_id: UUID,
     current_user: CurrentUserResponse = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
@@ -253,24 +323,46 @@ async def analyze_job(
             detail="Job not found",
         )
 
-    if not job.description:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Job has no description to analyze",
-        )
-
-    client = AIClient()
-    analyzer = JobAnalyzer(client)
     repository = JobAnalysisRepository(session)
 
-    service = JobAnalysisService(
-        analyzer=analyzer,
-        repository=repository,
-    )
+    analysis = await repository.get_latest_for_job(job.id)
 
-    analysis = await service.analyze_job(
-        job_id=job.id,
-        job_description=job.description,
-    )
+    if analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No analysis found for this job",
+        )
 
     return JobAnalysisResponse.model_validate(analysis)
+
+
+@router.get(
+    "/{job_id}/analysis/history",
+    response_model=list[JobAnalysisResponse],
+)
+async def get_job_analysis_history(
+    job_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> list[JobAnalysisResponse]:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    repository = JobAnalysisRepository(session)
+
+    analyses = await repository.get_history_for_job(job.id)
+
+    return [
+        JobAnalysisResponse.model_validate(analysis)
+        for analysis in analyses
+    ]

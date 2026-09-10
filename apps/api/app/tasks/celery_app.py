@@ -8,4 +8,8 @@ celery_app = Celery(
     "careeros",
     broker=settings.redis_url,
     backend=settings.redis_url,
+    include=[
+        "app.tasks.ai_tasks",
+        "app.tasks.job_analysis",
+    ],
 )

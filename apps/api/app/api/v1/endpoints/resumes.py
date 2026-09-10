@@ -20,6 +20,9 @@ from app.services.resume_parser import ResumeParserError, parse_resume
 from app.services.resume_storage import ResumeStorage, ResumeStorageError
 from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.schemas.resume_analysis import ResumeAnalysisResponse
+from app.ai.client import AIClient
+from app.ai.analyzers.resume_analyzer import ResumeAnalyzer
+from app.services.resume_analysis import ResumeAnalysisService
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -136,12 +139,25 @@ async def analyze_resume(
     session: AsyncSession = Depends(get_db_session),
 ) -> ResumeAnalysisResponse:
     resume = await get_resume_or_404(
-        session,
-        resume_id,
-        current_user.id,
+        resume_id=resume_id,
+        user_id=current_user.id,
+        db=session,
     )
 
-    if not resume.extracted_text:
+    current_version = next(
+        (
+            version
+            for version in resume.versions
+            if version.version == resume.current_version
+        ),
+        None,
+    )
+
+    if (
+        current_version is None
+        or not current_version.extracted_text
+        or not current_version.extracted_text.strip()
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Resume has no extracted text to analyze",
@@ -158,23 +174,10 @@ async def analyze_resume(
 
     analysis = await service.analyze_resume(
         resume_id=resume.id,
-        resume_text=resume.extracted_text,
+        resume_text=current_version.extracted_text,
     )
 
     return ResumeAnalysisResponse.model_validate(analysis)
-
-
-@router.get("/{resume_id}", response_model=ResumeDetailResponse)
-async def get_resume(
-    resume_id: UUID,
-    current_user: CurrentUserResponse = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
-) -> Resume:
-    return await get_resume_or_404(
-        resume_id,
-        current_user.id,
-        db,
-    )
 
 
 @router.post(
@@ -389,9 +392,9 @@ async def download_resume(
     db: AsyncSession = Depends(get_db_session),
 ) -> StreamingResponse:
     resume = await get_resume_or_404(
-        resume_id,
-        current_user.id,
-        db,
+        resume_id=resume_id,
+        user_id=current_user.id,
+        db=session,
     )
 
     result = await db.execute(
@@ -469,9 +472,9 @@ async def get_resume_analysis(
     session: AsyncSession = Depends(get_db_session),
 ) -> ResumeAnalysisResponse:
     resume = await get_resume_or_404(
-        session,
-        resume_id,
-        current_user.id,
+        resume_id=resume_id,
+        user_id=current_user.id,
+        db=session,
     )
 
     analysis_repository = ResumeAnalysisRepository(session)

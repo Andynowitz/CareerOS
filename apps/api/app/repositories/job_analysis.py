@@ -34,3 +34,15 @@ class JobAnalysisRepository:
         )
 
         return result.scalar_one_or_none()
+
+    async def get_history_for_job(
+        self,
+        job_id: UUID,
+    ) -> list[JobAnalysis]:
+        result = await self.session.execute(
+            select(JobAnalysis)
+            .where(JobAnalysis.job_id == job_id)
+            .order_by(JobAnalysis.created_at.desc())
+        )
+
+        return list(result.scalars().all())
