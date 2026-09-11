@@ -38,6 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql+asyncpg://careeros:change_this_password@localhost:5432/careeros
+      PYTHONPATH: ${{ github.workspace }}/apps/api
     defaults:
       run:
         working-directory: apps/api
