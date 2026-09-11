@@ -13,9 +13,6 @@ from app.schemas.job import JobCreate, JobResponse, JobUpdate
 from app.schemas.user import CurrentUserResponse
 from app.repositories.job_analysis import JobAnalysisRepository
 from app.schemas.job_analysis import JobAnalysisResponse
-from app.ai.analyzers.job_analyzer import JobAnalyzer
-from app.ai.client import AIClient
-from app.services.job_analysis import JobAnalysisService
 from app.schemas.analysis_task import AnalysisTaskResponse
 from app.tasks.job_analysis import analyze_job_task
 from celery.result import AsyncResult
@@ -26,7 +23,6 @@ from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.schemas.job_insight import JobInsightResponse
 from app.tasks.job_insight import analyze_job_insight_task
 from app.repositories.job_insight import JobInsightRepository
-from app.schemas.job_insight import JobInsightResponse
 
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -205,41 +201,6 @@ async def delete_job(
 
     await repository.delete(job)
 
-@router.get(
-    "/{job_id}/analysis",
-    response_model=JobAnalysisResponse,
-)
-async def get_job_analysis(
-    job_id: UUID,
-    current_user: CurrentUserResponse = Depends(get_current_user),
-    session: AsyncSession = Depends(get_db_session),
-) -> JobAnalysisResponse:
-    job_repository = JobRepository(session)
-
-    job = await job_repository.get_by_id(
-        job_id,
-        current_user.id,
-    )
-
-    if job is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job not found",
-        )
-
-    analysis_repository = JobAnalysisRepository(session)
-
-    analysis = await analysis_repository.get_latest_for_job(
-        job.id,
-    )
-
-    if analysis is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Job analysis not found",
-        )
-
-    return JobAnalysisResponse.model_validate(analysis)
 
 
 @router.post(

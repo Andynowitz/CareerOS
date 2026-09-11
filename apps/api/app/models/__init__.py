@@ -15,4 +15,6 @@ __all__ = [
     "JobAnalysis",
     "Resume",
     "ResumeVersion",
+    "ResumeAnalysis",
+    "JobInsight",
 ]

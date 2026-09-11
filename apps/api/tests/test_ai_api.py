@@ -195,7 +195,7 @@ async def test_get_latest_job_analysis_when_none_exists(
 
     result = response.json()
 
-    assert result["detail"] == "Job analysis not found"
+    assert result["detail"] == "No analysis found for this job"
 
 
 async def test_get_job_analysis_history(

@@ -3,7 +3,6 @@ from __future__ import annotations
 from uuid import UUID
 
 from app.ai.analyzers.job_analyzer import JobAnalyzer
-from app.ai.client import AIClient
 from app.models.job_analysis import JobAnalysis
 from app.repositories.job_analysis import JobAnalysisRepository
 

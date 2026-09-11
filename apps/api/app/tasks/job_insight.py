@@ -11,9 +11,7 @@ from app.ai.analyzers.job_insight_analyzer import JobInsightAnalyzer
 from app.ai.client import AIClient
 from app.core.config import get_settings
 from app.models.job import Job
-from app.models.job_analysis import JobAnalysis
 from app.models.resume import Resume
-from app.models.resume_analysis import ResumeAnalysis
 from app.repositories.job_analysis import JobAnalysisRepository
 from app.repositories.job_insight import JobInsightRepository
 from app.repositories.resume_analysis import ResumeAnalysisRepository

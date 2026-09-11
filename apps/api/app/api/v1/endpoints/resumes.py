@@ -20,9 +20,6 @@ from app.services.resume_parser import ResumeParserError, parse_resume
 from app.services.resume_storage import ResumeStorage, ResumeStorageError
 from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.schemas.resume_analysis import ResumeAnalysisResponse
-from app.ai.client import AIClient
-from app.ai.analyzers.resume_analyzer import ResumeAnalyzer
-from app.services.resume_analysis import ResumeAnalysisService
 from app.tasks.resume_analysis import analyze_resume_task
 from app.schemas.analysis_task import AnalysisTaskResponse
 

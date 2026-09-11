@@ -16,7 +16,6 @@ from app.db.session import get_db_session
 from app.main import app
 from app.schemas.user import CurrentUserResponse
 
-from collections.abc import AsyncGenerator, Callable, Awaitable
 from contextlib import asynccontextmanager
 
 DATABASE_URL = os.environ["DATABASE_URL"]
@@ -32,12 +31,12 @@ TestingSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
-
 TEST_USER = CurrentUserResponse(
     id="test-user-id",
     email="test@example.com",
     name="Test User",
 )
+
 
 TEST_USER_2 = CurrentUserResponse(
     id="test-user-id-2",
@@ -58,34 +57,6 @@ app.dependency_overrides[get_db_session] = override_get_db_session
 app.dependency_overrides[get_current_user] = override_get_current_user
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def setup_test_user() -> AsyncGenerator[None, None]:
-    async with TestingSessionLocal() as session:
-        await session.execute(
-            text(
-                """
-                INSERT INTO "user" (id, name, email, "emailVerified", "createdAt", "updatedAt")
-                VALUES (
-                    :id,
-                    :name,
-                    :email,
-                    true,
-                    NOW(),
-                    NOW()
-                )
-                ON CONFLICT (id) DO NOTHING
-                """
-            ),
-            {
-                "id": TEST_USER.id,
-                "name": TEST_USER.name,
-                "email": TEST_USER.email,
-            },
-        )
-
-        await session.commit()
-
-    yield
 
     
 @pytest_asyncio.fixture

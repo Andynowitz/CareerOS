@@ -1,1 +1,1 @@
-from app.schemas.job import JobCreate
+from app.schemas.job import JobCreate as JobCreate
