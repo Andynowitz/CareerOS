@@ -3,6 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -25,6 +27,6 @@ class JobInsightResponse(BaseModel):
 
     overall_assessment: str | None
 
-    raw_insight: dict | None
-
+    raw_insight: dict[str, Any] | None
+    
     created_at: datetime

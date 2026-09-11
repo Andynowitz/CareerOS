@@ -8,6 +8,7 @@ from minio.error import S3Error
 
 from app.core.config import get_settings
 
+from urllib3.response import BaseHTTPResponse
 
 class ResumeStorageError(Exception):
     """Raised when resume storage operations fail."""
@@ -61,7 +62,7 @@ class ResumeStorage:
 
         return object_key
 
-    def get(self, object_key: str):
+    def get(self, object_key: str) -> BaseHTTPResponse:
         try:
             return self.client.get_object(
                 self.bucket,

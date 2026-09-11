@@ -18,14 +18,15 @@ from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.services.job_insight import JobInsightService
 from app.tasks.celery_app import celery_app
 
+from typing import Any
 
 @celery_app.task(
     bind=True,
     max_retries=3,
     default_retry_delay=5,
-)
+)  # type: ignore[misc]
 def analyze_job_insight_task(
-    self,
+    self: Any,
     job_id: str,
     resume_id: str,
 ) -> str:

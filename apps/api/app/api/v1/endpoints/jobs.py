@@ -15,7 +15,6 @@ from app.repositories.job_analysis import JobAnalysisRepository
 from app.schemas.job_analysis import JobAnalysisResponse
 from app.schemas.analysis_task import AnalysisTaskResponse
 from app.tasks.job_analysis import analyze_job_task
-from celery.result import AsyncResult
 from app.tasks.celery_app import celery_app
 from sqlalchemy import select
 from app.models.resume import Resume
@@ -23,6 +22,7 @@ from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.schemas.job_insight import JobInsightResponse
 from app.tasks.job_insight import analyze_job_insight_task
 from app.repositories.job_insight import JobInsightRepository
+from celery.result import AsyncResult  # type: ignore[import-untyped]
 
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])

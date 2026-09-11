@@ -15,13 +15,14 @@ from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.services.resume_analysis import ResumeAnalysisService
 from app.tasks.celery_app import celery_app
 
+from typing import Any
 
 @celery_app.task(
     bind=True,
     max_retries=3,
     default_retry_delay=5,
-)
-def analyze_resume_task(self, resume_id: str) -> str:
+)  # type: ignore[misc]
+def analyze_resume_task(self: Any, resume_id: str) -> str:
     try:
         return asyncio.run(_run_analysis(resume_id))
     except ValueError:

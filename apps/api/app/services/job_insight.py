@@ -6,6 +6,8 @@ from app.ai.analyzers.job_insight_analyzer import JobInsightAnalyzer
 from app.models.job_insight import JobInsight
 from app.repositories.job_insight import JobInsightRepository
 
+from typing import Any
+
 
 class JobInsightService:
     def __init__(
@@ -20,8 +22,8 @@ class JobInsightService:
         self,
         job_id: UUID,
         resume_id: UUID,
-        job_analysis: dict,
-        resume_analysis: dict,
+        job_analysis: dict[str, Any],
+        resume_analysis: dict[str, Any],
     ) -> JobInsight:
         result = await self.analyzer.analyze(
             job_analysis=job_analysis,

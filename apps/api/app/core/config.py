@@ -5,15 +5,14 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_url: str = Field(alias="DATABASE_URL")
+    database_url: str = Field(
+        default="postgresql://careeros:change_this_password@postgres:5432/careeros",
+        alias="DATABASE_URL",
+    )
     redis_url: str = Field(default="redis://redis:6379/0", alias="REDIS_URL")
     api_cors_origins: str = Field(
         default="http://localhost:3000", alias="API_CORS_ORIGINS"
     )
-    minio_root_user: str
-    minio_root_password: str
-    minio_endpoint: str
-    minio_bucket: str
     
     model_config = SettingsConfigDict(extra="ignore")
     minio_endpoint: str = Field(

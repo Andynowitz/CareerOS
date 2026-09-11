@@ -9,6 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
+from typing import Any
 
 class JobInsight(Base):
     __tablename__ = "job_insight"
@@ -72,7 +73,7 @@ class JobInsight(Base):
         nullable=True,
     )
 
-    raw_insight: Mapped[dict | None] = mapped_column(
+    raw_insight: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,
     )

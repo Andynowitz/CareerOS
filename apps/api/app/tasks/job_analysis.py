@@ -13,13 +13,14 @@ from app.repositories.job_analysis import JobAnalysisRepository
 from app.services.job_analysis import JobAnalysisService
 from app.tasks.celery_app import celery_app
 
+from typing import Any
 
 @celery_app.task(
     bind=True,
     max_retries=3,
     default_retry_delay=5,
-)
-def analyze_job_task(self, job_id: str) -> str:
+)  # type: ignore[misc]
+def analyze_job_task(self: Any, job_id: str) -> str:
     try:
         return asyncio.run(_run_analysis(job_id))
 

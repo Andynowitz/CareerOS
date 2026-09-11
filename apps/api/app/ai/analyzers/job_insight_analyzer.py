@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from app.ai.client import AIClient
 
+from typing import Any
 
 class JobInsightResult(BaseModel):
     match_score: int = Field(ge=0, le=100)
@@ -25,8 +26,8 @@ class JobInsightAnalyzer:
 
     async def analyze(
         self,
-        job_analysis: dict,
-        resume_analysis: dict,
+        job_analysis: dict[str, Any],
+        resume_analysis: dict[str, Any],
     ) -> JobInsightResult:
         prompt = f"""
 Analyze how well the resume matches the job.
