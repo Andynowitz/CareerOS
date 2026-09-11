@@ -1,82 +1,221 @@
-from unittest.mock import AsyncMock
+from unittest.mock import MagicMock
 
 import pytest
 
-from app.ai.analyzers.job_analyzer import JobAnalysisResult, JobAnalyzer
-from app.ai.analyzers.resume_analyzer import ResumeAnalysisResult, ResumeAnalyzer
+from app.tasks.job_analysis import analyze_job_task
+from app.tasks.resume_analysis import analyze_resume_task
+from app.tasks.job_insight import analyze_job_insight_task
 
 
-@pytest.mark.asyncio
-async def test_job_analyzer_returns_structured_result():
-    mock_client = AsyncMock()
+# ---------------------------------------------------------------------------
+# Job analysis task
+# ---------------------------------------------------------------------------
 
-    mock_client.analyze.return_value = JobAnalysisResult(
-        required_skills=["Python", "FastAPI"],
-        preferred_skills=["Docker"],
-        responsibilities=["Develop backend services"],
-        experience_requirements="2+ years of experience",
-        education_requirements="Bachelor's degree in Computer Science",
-        keywords=["Python", "FastAPI", "Docker"],
-        salary_information={"min": 3000, "max": 4500},
+
+def test_analyze_job_task_success(monkeypatch):
+    async def mock_run_analysis(job_id: str) -> str:
+        return job_id
+
+    monkeypatch.setattr(
+        "app.tasks.job_analysis._run_analysis",
+        mock_run_analysis,
     )
 
-    analyzer = JobAnalyzer(mock_client)
+    result = analyze_job_task.run("test-job-id")
 
-    result = await analyzer.analyze(
-        """
-        We are looking for a Python developer.
+    assert result == "test-job-id"
 
-        Requirements:
-        - Python
-        - FastAPI
-        - 2+ years of experience
 
-        Docker experience is preferred.
-        """
+def test_analyze_job_task_does_not_retry_value_error(monkeypatch):
+    async def mock_run_analysis(job_id: str) -> str:
+        raise ValueError("Job has no description to analyze")
+
+    monkeypatch.setattr(
+        "app.tasks.job_analysis._run_analysis",
+        mock_run_analysis,
     )
 
-    assert result.required_skills == ["Python", "FastAPI"]
-    assert result.preferred_skills == ["Docker"]
-    assert result.responsibilities == ["Develop backend services"]
-    assert result.experience_requirements == "2+ years of experience"
-    assert result.education_requirements == "Bachelor's degree in Computer Science"
-    assert result.keywords == ["Python", "FastAPI", "Docker"]
-    assert result.salary_information == {"min": 3000, "max": 4500}
-
-    mock_client.analyze.assert_awaited_once()
+    with pytest.raises(ValueError, match="Job has no description"):
+        analyze_job_task.run("test-job-id")
 
 
-@pytest.mark.asyncio
-async def test_resume_analyzer_returns_structured_result():
-    mock_client = AsyncMock()
+def test_analyze_job_task_retries_unexpected_error(monkeypatch):
+    async def mock_run_analysis(job_id: str) -> str:
+        raise RuntimeError("Temporary AI failure")
 
-    mock_client.analyze.return_value = ResumeAnalysisResult(
-        skills=["Java", "C#", "SQL"],
-        experience_summary="Software development experience.",
-        education_summary="Bachelor's degree in Software Engineering.",
-        projects_summary="Developed several software projects.",
+    monkeypatch.setattr(
+        "app.tasks.job_analysis._run_analysis",
+        mock_run_analysis,
     )
 
-    analyzer = ResumeAnalyzer(mock_client)
-
-    result = await analyzer.analyze(
-        """
-        Andreas Alexandru
-
-        Skills:
-        Java, C#, SQL
-
-        Education:
-        Bachelor of Software Engineering
-
-        Projects:
-        Several software development projects
-        """
+    retry_mock = MagicMock(
+        side_effect=RuntimeError("Retry requested")
     )
 
-    assert result.skills == ["Java", "C#", "SQL"]
-    assert result.experience_summary == "Software development experience."
-    assert result.education_summary == "Bachelor's degree in Software Engineering."
-    assert result.projects_summary == "Developed several software projects."
+    monkeypatch.setattr(
+        analyze_job_task,
+        "retry",
+        retry_mock,
+    )
 
-    mock_client.analyze.assert_awaited_once()
+    with pytest.raises(RuntimeError, match="Retry requested"):
+        analyze_job_task.run("test-job-id")
+
+    retry_mock.assert_called_once()
+
+    call_kwargs = retry_mock.call_args.kwargs
+
+    assert isinstance(call_kwargs["exc"], RuntimeError)
+    assert call_kwargs["countdown"] == 5
+
+
+# ---------------------------------------------------------------------------
+# Resume analysis task
+# ---------------------------------------------------------------------------
+
+
+def test_analyze_resume_task_success(monkeypatch):
+    async def mock_run_analysis(resume_id: str) -> str:
+        return resume_id
+
+    monkeypatch.setattr(
+        "app.tasks.resume_analysis._run_analysis",
+        mock_run_analysis,
+    )
+
+    result = analyze_resume_task.run("test-resume-id")
+
+    assert result == "test-resume-id"
+
+
+def test_analyze_resume_task_does_not_retry_value_error(monkeypatch):
+    async def mock_run_analysis(resume_id: str) -> str:
+        raise ValueError("Resume has no extracted text to analyze")
+
+    monkeypatch.setattr(
+        "app.tasks.resume_analysis._run_analysis",
+        mock_run_analysis,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Resume has no extracted text",
+    ):
+        analyze_resume_task.run("test-resume-id")
+
+
+def test_analyze_resume_task_retries_unexpected_error(monkeypatch):
+    async def mock_run_analysis(resume_id: str) -> str:
+        raise RuntimeError("Temporary AI failure")
+
+    monkeypatch.setattr(
+        "app.tasks.resume_analysis._run_analysis",
+        mock_run_analysis,
+    )
+
+    retry_mock = MagicMock(
+        side_effect=RuntimeError("Retry requested")
+    )
+
+    monkeypatch.setattr(
+        analyze_resume_task,
+        "retry",
+        retry_mock,
+    )
+
+    with pytest.raises(RuntimeError, match="Retry requested"):
+        analyze_resume_task.run("test-resume-id")
+
+    retry_mock.assert_called_once()
+
+    call_kwargs = retry_mock.call_args.kwargs
+
+    assert isinstance(call_kwargs["exc"], RuntimeError)
+    assert call_kwargs["countdown"] == 5
+
+
+# ---------------------------------------------------------------------------
+# Job insight task
+# ---------------------------------------------------------------------------
+
+
+def test_analyze_job_insight_task_success(monkeypatch):
+    async def mock_run_analysis(
+        job_id: str,
+        resume_id: str,
+    ) -> str:
+        return f"{job_id}:{resume_id}"
+
+    monkeypatch.setattr(
+        "app.tasks.job_insight._run_analysis",
+        mock_run_analysis,
+    )
+
+    result = analyze_job_insight_task.run(
+        "test-job-id",
+        "test-resume-id",
+    )
+
+    assert result == "test-job-id:test-resume-id"
+
+
+def test_analyze_job_insight_task_does_not_retry_value_error(
+    monkeypatch,
+):
+    async def mock_run_analysis(
+        job_id: str,
+        resume_id: str,
+    ) -> str:
+        raise ValueError("No job analysis found")
+
+    monkeypatch.setattr(
+        "app.tasks.job_insight._run_analysis",
+        mock_run_analysis,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="No job analysis found",
+    ):
+        analyze_job_insight_task.run(
+            "test-job-id",
+            "test-resume-id",
+        )
+
+
+def test_analyze_job_insight_task_retries_unexpected_error(
+    monkeypatch,
+):
+    async def mock_run_analysis(
+        job_id: str,
+        resume_id: str,
+    ) -> str:
+        raise RuntimeError("Temporary AI failure")
+
+    monkeypatch.setattr(
+        "app.tasks.job_insight._run_analysis",
+        mock_run_analysis,
+    )
+
+    retry_mock = MagicMock(
+        side_effect=RuntimeError("Retry requested")
+    )
+
+    monkeypatch.setattr(
+        analyze_job_insight_task,
+        "retry",
+        retry_mock,
+    )
+
+    with pytest.raises(RuntimeError, match="Retry requested"):
+        analyze_job_insight_task.run(
+            "test-job-id",
+            "test-resume-id",
+        )
+
+    retry_mock.assert_called_once()
+
+    call_kwargs = retry_mock.call_args.kwargs
+
+    assert isinstance(call_kwargs["exc"], RuntimeError)
+    assert call_kwargs["countdown"] == 5

@@ -11,5 +11,7 @@ celery_app = Celery(
     include=[
         "app.tasks.ai_tasks",
         "app.tasks.job_analysis",
+        "app.tasks.job_insight",
+        "app.tasks.resume_analysis",
     ],
 )

@@ -1,39 +1,38 @@
 JOB_ANALYSIS_PROMPT = """
-Analyze the following job description.
+Analyze the following job description and extract structured information.
 
-Extract the following information:
+Return only information that is explicitly present in the job description.
+Do not invent, infer, or assume requirements.
 
-1. Required technical and soft skills
-2. Preferred or nice-to-have skills
-3. Main responsibilities
-4. Required experience
-5. Education requirements
-6. Important keywords
-7. Salary information, if explicitly mentioned
-
-Do not invent information that is not present in the job description.
-
-Return the information in the requested structured format.
+Rules:
+- required_skills: individual technical/professional skills as separate strings
+- preferred_skills: individual preferred skills as separate strings
+- responsibilities: individual responsibilities as separate strings
+- keywords: important individual keywords or phrases as separate strings
+- Do not concatenate multiple keywords into one string
+- Do not use Markdown formatting
+- Do not add bullet points, prefixes, numbering, or special formatting inside strings
+- Keep each string concise and readable
+- salary_information should contain only salary-related information explicitly stated
+- If information is not available, return an empty list or null as appropriate
 
 Job description:
 {job_description}
 """
 
 RESUME_ANALYSIS_PROMPT = """
-Analyze the following resume.
+Analyze the following resume and extract structured information.
 
-Extract the following information:
+Return only information that is explicitly present in the resume.
+Do not invent, infer, or assume information.
 
-1. Technical and soft skills
-2. Professional experience summary
-3. Education summary
-4. Projects summary
-
-Do not invent information that is not present in the resume.
-
-Keep the summaries concise but informative.
-
-Return the information in the requested structured format.
+Rules:
+- skills: individual skills as separate strings
+- Do not concatenate multiple skills into one string
+- Do not use Markdown formatting
+- Do not add bullet points, prefixes, numbering, or special formatting inside strings
+- Keep summaries concise and professional
+- Preserve the meaning of the original resume
 
 Resume:
 {resume_text}

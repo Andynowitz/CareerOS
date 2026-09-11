@@ -20,6 +20,14 @@ from app.schemas.analysis_task import AnalysisTaskResponse
 from app.tasks.job_analysis import analyze_job_task
 from celery.result import AsyncResult
 from app.tasks.celery_app import celery_app
+from sqlalchemy import select
+from app.models.resume import Resume
+from app.repositories.resume_analysis import ResumeAnalysisRepository
+from app.schemas.job_insight import JobInsightResponse
+from app.tasks.job_insight import analyze_job_insight_task
+from app.repositories.job_insight import JobInsightRepository
+from app.schemas.job_insight import JobInsightResponse
+
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -365,4 +373,183 @@ async def get_job_analysis_history(
     return [
         JobAnalysisResponse.model_validate(analysis)
         for analysis in analyses
+    ]
+
+
+@router.post(
+    "/{job_id}/insights/{resume_id}",
+    response_model=AnalysisTaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def analyze_job_insight(
+    job_id: UUID,
+    resume_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> AnalysisTaskResponse:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    resume_result = await session.execute(
+        select(Resume).where(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id,
+        )
+    )
+
+    resume = resume_result.scalar_one_or_none()
+
+    if resume is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found",
+        )
+
+    job_analysis_repository = JobAnalysisRepository(session)
+
+    job_analysis = await job_analysis_repository.get_latest_for_job(
+        job.id,
+    )
+
+    if job_analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Job must be analyzed before generating insights",
+        )
+
+    resume_analysis_repository = ResumeAnalysisRepository(session)
+
+    resume_analysis = await resume_analysis_repository.get_latest_for_resume(
+        resume.id,
+    )
+
+    if resume_analysis is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Resume must be analyzed before generating insights",
+        )
+
+    task = analyze_job_insight_task.delay(
+        str(job.id),
+        str(resume.id),
+    )
+
+    return AnalysisTaskResponse(
+        task_id=task.id,
+        status="queued",
+    )
+
+
+@router.get(
+    "/{job_id}/insights/{resume_id}",
+    response_model=JobInsightResponse,
+)
+async def get_job_insight(
+    job_id: UUID,
+    resume_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> JobInsightResponse:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    result = await session.execute(
+        select(Resume).where(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id,
+        )
+    )
+
+    resume = result.scalar_one_or_none()
+
+    if resume is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found",
+        )
+
+    repository = JobInsightRepository(session)
+
+    insight = await repository.get_latest_for_job_and_resume(
+        job.id,
+        resume.id,
+    )
+
+    if insight is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job insight not found",
+        )
+
+    return JobInsightResponse.model_validate(insight)
+
+
+@router.get(
+    "/{job_id}/insights/{resume_id}/history",
+    response_model=list[JobInsightResponse],
+)
+async def get_job_insight_history(
+    job_id: UUID,
+    resume_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+) -> list[JobInsightResponse]:
+    job_repository = JobRepository(session)
+
+    job = await job_repository.get_by_id(
+        job_id,
+        current_user.id,
+    )
+
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found",
+        )
+
+    result = await session.execute(
+        select(Resume).where(
+            Resume.id == resume_id,
+            Resume.user_id == current_user.id,
+        )
+    )
+
+    resume = result.scalar_one_or_none()
+
+    if resume is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Resume not found",
+        )
+
+    repository = JobInsightRepository(session)
+
+    insights = await repository.get_history_for_job_and_resume(
+        job.id,
+        resume.id,
+    )
+
+    return [
+        JobInsightResponse.model_validate(insight)
+        for insight in insights
     ]

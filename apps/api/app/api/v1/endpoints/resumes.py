@@ -23,6 +23,8 @@ from app.schemas.resume_analysis import ResumeAnalysisResponse
 from app.ai.client import AIClient
 from app.ai.analyzers.resume_analyzer import ResumeAnalyzer
 from app.services.resume_analysis import ResumeAnalysisService
+from app.tasks.resume_analysis import analyze_resume_task
+from app.schemas.analysis_task import AnalysisTaskResponse
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
 
@@ -128,16 +130,32 @@ async def list_resumes(
     return list(result.scalars().all())
 
 
+@router.get(
+    "/{resume_id}",
+    response_model=ResumeDetailResponse,
+)
+async def get_resume(
+    resume_id: UUID,
+    current_user: CurrentUserResponse = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session),
+) -> Resume:
+    return await get_resume_or_404(
+        resume_id=resume_id,
+        user_id=current_user.id,
+        db=db,
+    )
+
+
 @router.post(
     "/{resume_id}/analysis",
-    response_model=ResumeAnalysisResponse,
-    status_code=status.HTTP_201_CREATED,
+    response_model=AnalysisTaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
 )
 async def analyze_resume(
     resume_id: UUID,
     current_user: CurrentUserResponse = Depends(get_current_user),
     session: AsyncSession = Depends(get_db_session),
-) -> ResumeAnalysisResponse:
+) -> AnalysisTaskResponse:
     resume = await get_resume_or_404(
         resume_id=resume_id,
         user_id=current_user.id,
@@ -163,21 +181,12 @@ async def analyze_resume(
             detail="Resume has no extracted text to analyze",
         )
 
-    client = AIClient()
-    analyzer = ResumeAnalyzer(client)
-    repository = ResumeAnalysisRepository(session)
+    task = analyze_resume_task.delay(str(resume.id))
 
-    service = ResumeAnalysisService(
-        analyzer=analyzer,
-        repository=repository,
+    return AnalysisTaskResponse(
+        task_id=task.id,
+        status="queued",
     )
-
-    analysis = await service.analyze_resume(
-        resume_id=resume.id,
-        resume_text=current_version.extracted_text,
-    )
-
-    return ResumeAnalysisResponse.model_validate(analysis)
 
 
 @router.post(
@@ -394,7 +403,7 @@ async def download_resume(
     resume = await get_resume_or_404(
         resume_id=resume_id,
         user_id=current_user.id,
-        db=session,
+        db=db,
     )
 
     result = await db.execute(

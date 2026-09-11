@@ -103,3 +103,58 @@ export async function deleteJob(id: string): Promise<void> {
 
   await handleResponse<void>(response);
 }
+
+
+export interface AnalysisTaskResponse {
+  task_id: string;
+  status: string;
+}
+
+export interface JobAnalysis {
+  id: string;
+  job_id: string;
+  required_skills: string[];
+  preferred_skills: string[];
+  responsibilities: string[];
+  experience_requirements: string | null;
+  education_requirements: string | null;
+  keywords: string[];
+  salary_information: Record<string, string | number | null> | null;
+  raw_analysis: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export async function analyzeJob(
+  id: string,
+): Promise<AnalysisTaskResponse> {
+  const response = await fetch(`${API_V1_URL}/jobs/${id}/analysis`, {
+    method: "POST",
+    credentials: "include",
+  });
+
+  return handleResponse<AnalysisTaskResponse>(response);
+}
+
+export async function getJobAnalysis(
+  id: string,
+): Promise<JobAnalysis> {
+  const response = await fetch(`${API_V1_URL}/jobs/${id}/analysis`, {
+    credentials: "include",
+  });
+
+  return handleResponse<JobAnalysis>(response);
+}
+
+export async function getJobAnalysisStatus(
+  jobId: string,
+  taskId: string,
+): Promise<AnalysisTaskResponse> {
+  const response = await fetch(
+    `${API_V1_URL}/jobs/${jobId}/analysis/status/${taskId}`,
+    {
+      credentials: "include",
+    },
+  );
+
+  return handleResponse<AnalysisTaskResponse>(response);
+}

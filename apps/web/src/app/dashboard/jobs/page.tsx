@@ -7,7 +7,11 @@ import {
   getJobs,
   updateJob,
   deleteJob,
+  analyzeJob,
+  getJobAnalysis,
+  getJobAnalysisStatus,
   type Job,
+  type JobAnalysis,
 } from "@/lib/jobs-api";
 
 import {
