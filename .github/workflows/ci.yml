@@ -8,24 +8,32 @@ on:
 jobs:
   web:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://careeros:change_this_password@localhost:5432/careeros
+      BETTER_AUTH_SECRET: ci-only-secret-for-build
     defaults:
       run:
         working-directory: apps/web
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9.15.0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+
       - run: pnpm install --frozen-lockfile=false
         working-directory: .
+
       - run: pnpm lint
       - run: pnpm test
       - run: pnpm build
-
+      
   api:
     runs-on: ubuntu-latest
     defaults:
