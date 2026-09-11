@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE_URL: postgresql://careeros:change_this_password@localhost:5432/careeros
-      BETTER_AUTH_SECRET: ci-only-secret-for-build
+      BETTER_AUTH_SECRET: ci-only-secret-for-build-7f3a91c2e8d4b6a0
     defaults:
       run:
         working-directory: apps/web
