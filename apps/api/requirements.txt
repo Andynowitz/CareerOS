@@ -21,3 +21,4 @@ python-docx
 python-multipart==0.0.20
 openai
 psycopg2-binary
+future==0.18.3

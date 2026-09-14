@@ -67,6 +67,13 @@ async def client() -> AsyncGenerator[AsyncClient, None]:
     ) as async_client:
         yield async_client
 
+
+@pytest_asyncio.fixture
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with TestingSessionLocal() as session:
+        yield session
+
+
 @pytest_asyncio.fixture
 async def as_second_user():
     @asynccontextmanager

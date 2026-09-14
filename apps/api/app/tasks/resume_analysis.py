@@ -14,6 +14,7 @@ from app.models.resume import Resume
 from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.services.resume_analysis import ResumeAnalysisService
 from app.tasks.celery_app import celery_app
+from app.models.resume import Resume, ResumeVersion
 
 from typing import Any
 
@@ -57,14 +58,14 @@ async def _run_analysis(resume_id: str) -> str:
             if resume is None:
                 raise ValueError(f"Resume {resume_id} not found")
 
-            current_version = next(
-                (
-                    version
-                    for version in resume.versions
-                    if version.version == resume.current_version
-                ),
-                None,
+            version_result = await session.execute(
+                select(ResumeVersion)
+                .where(
+                    ResumeVersion.resume_id == resume.id,
+                    ResumeVersion.version == resume.current_version,
+                )
             )
+            current_version = version_result.scalar_one_or_none()
 
             if (
                 current_version is None

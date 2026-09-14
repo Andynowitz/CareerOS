@@ -1,184 +1,189 @@
 # CareerOS Roadmap
 
-CareerOS is developed incrementally through defined implementation phases.
-
-The goal is to establish a reliable technical foundation first and then build the application features on top of it.
+CareerOS is developed in incremental phases. Each phase should leave the project in a stable, tested state before the next phase begins.
 
 ---
 
-## Phase 1 — Foundation
+## Phase 1 — Foundation ✅
 
-**Status: ✅ Complete**
+Project and infrastructure foundation.
 
-Establish the production-oriented technical foundation.
-
-### Completed
-
-* [x] Turborepo monorepo
-* [x] pnpm workspace
-* [x] Node.js 22 configuration
-* [x] Next.js 15
-* [x] React 19
-* [x] TypeScript strict mode
-* [x] FastAPI
-* [x] Python 3.13
-* [x] PostgreSQL 17
-* [x] Redis 7
-* [x] Celery
-* [x] SQLAlchemy 2
-* [x] Alembic
-* [x] Docker Compose
+* [x] pnpm monorepo
+* [x] Next.js frontend
+* [x] FastAPI backend
+* [x] PostgreSQL
+* [x] Redis + Celery
 * [x] MinIO
 * [x] Better Auth
-* [x] Email/password authentication
-* [x] Google OAuth configuration
-* [x] PostgreSQL-backed sessions
-* [x] Protected dashboard
-* [x] FastAPI authentication boundary
-* [x] API documentation
-* [x] Frontend testing foundation
-* [x] Backend testing foundation
-* [x] ESLint
-* [x] Ruff
-* [x] mypy
+* [x] Docker Compose
+* [x] Testing and code-quality tooling
 * [x] GitHub Actions CI
-* [x] Environment configuration
 
 ---
 
-## Phase 2 — Core Application
+## Phase 2 — Job Management ✅
 
-**Status: ⏳ Planned**
+Core job application tracking.
 
-Build the central job application management functionality.
-
-### Planned Features
-
-* [ ] Dashboard
-* [ ] Job CRUD
-* [ ] Job status management
-* [ ] Kanban board
-* [ ] Job search
-* [ ] Filtering
-* [ ] Sorting
-* [ ] Application activity
-* [ ] Job detail views
-* [ ] API ownership checks
-* [ ] Tests for core application functionality
+* [x] Job CRUD
+* [x] Application statuses
+* [x] Job activity tracking
+* [x] Job detail views
+* [x] Authentication and resource ownership
+* [x] Backend tests
+* [x] Frontend tests
 
 ---
 
-## Phase 3 — Resume Management
+## Phase 3 — Resume Management ✅
 
-**Status: ⏳ Planned**
+Resume storage, versioning, and processing.
 
-Introduce resume storage and management.
-
-### Planned Features
-
-* [ ] Resume upload
-* [ ] Resume metadata
-* [ ] MinIO integration
-* [ ] Resume management UI
-* [ ] File validation
-* [ ] File size limits
-* [ ] Resume parsing foundation
-* [ ] Resume versioning
-* [ ] Resume-related API endpoints
-* [ ] Tests
+* [x] PDF/DOCX uploads
+* [x] File validation
+* [x] Text extraction
+* [x] Resume versions
+* [x] MinIO storage
+* [x] Resume API
+* [x] Resume UI
+* [x] Automated tests
 
 ---
 
-## Phase 4 — AI Analysis
+## Phase 4 — AI Analysis ✅
 
-**Status: ⏳ Planned**
+AI-powered analysis of jobs and resumes.
 
-Introduce asynchronous AI-powered analysis.
-
-### Planned Features
-
-* [ ] Job description analysis
-* [ ] Resume analysis
-* [ ] AI-generated insights
-* [ ] OpenAI integration
-* [ ] Celery-based AI processing
-* [ ] Redis job coordination
-* [ ] Analysis persistence
-* [ ] Analysis history
-* [ ] Error handling and retries
-* [ ] AI-related API endpoints
-* [ ] Tests
+* [x] Job description analysis
+* [x] Resume analysis
+* [x] Structured job insights
+* [x] AI-generated match insights
+* [x] OpenAI integration
+* [x] Celery-based asynchronous processing
+* [x] Redis task coordination
+* [x] Persistent analysis results
+* [x] Analysis status and history
+* [x] Automated tests
 
 ---
 
-## Phase 5 — Job Matching
+# Phase 5 — Job Matching 🚧
 
-**Status: ⏳ Planned**
+Build a deterministic and explainable matching system between jobs and resumes.
 
-Connect job and resume analysis to produce meaningful matching information.
+### 5.1 — Analysis & Design
 
-### Planned Features
+* [ ] Analyze existing `Job` model
+* [ ] Analyze existing `JobAnalysis`
+* [ ] Analyze existing `Resume` model
+* [ ] Analyze existing `ResumeVersion`
+* [ ] Analyze existing `ResumeAnalysis`
+* [ ] Analyze existing Phase 4 AI insights
+* [x] Define the matching domain model
+* [x] Define matching inputs
+* [x] Define matching rules
+* [x] Define scoring weights
+* [x] Define skill normalization strategy
+* [x] Define explainable match output
 
-* [ ] Deterministic match scoring
-* [ ] Skill comparison
-* [ ] Experience comparison
-* [ ] Job/resume compatibility
-* [ ] Match explanations
-* [ ] Match history
-* [ ] Match API endpoints
-* [ ] Dashboard integration
-* [ ] Tests
+### 5.2 — Matching Engine
+
+* [x] Implement matching domain
+* [x] Implement skill matching
+* [x] Implement required/preferred skill handling
+* [x] Implement experience matching
+* [x] Implement education matching
+* [x] Implement score calculation
+* [x] Implement match explanations
+* [x] Add unit tests
+
+### 5.3 — Persistence
+
+* [x] Create match database model
+* [x] Create database migration
+* [x] Implement match repository
+* [x] Implement match persistence
+* [x] Implement match history
+* [x] Add database tests
+
+### 5.4 — Backend API
+
+* [x] Define matching API
+* [x] Implement match creation
+* [x] Implement match retrieval
+* [x] Implement match history
+* [x] Add authorization and ownership checks
+* [x] Add API tests
+* [x] Update API documentation
+
+### 5.5 — Frontend
+- [x] Add match score to job views
+- [x] Add match breakdown
+- [x] Add matched skills
+- [x] Add missing skills
+- [x] Add match explanation
+- [x] Add resume selection
+- [x] Add loading/error states
+- [x] Add frontend tests
+
+### 5.6 — Integration & Quality
+
+* [ ] Run full backend test suite
+* [ ] Run full frontend test suite
+* [ ] Run linting
+* [ ] Run type checking
+* [ ] Run production build
+* [ ] Test complete matching workflow
+* [ ] Verify existing Phase 1–4 functionality
+* [ ] Update documentation
+* [ ] Mark Phase 5 complete
+
+### Design Goal
+
+The matching engine should be:
+
+* **Deterministic** — same inputs produce the same result
+* **Reproducible** — results can be recalculated
+* **Explainable** — users can understand why a match received its score
+* **Testable** — matching rules can be covered with automated tests
+
+AI-generated analysis from Phase 4 may provide structured information used by the matcher, but the final matching score should be calculated by defined and testable rules.
 
 ---
 
-## Phase 6 — Browser Extension
+## Phase 6 — Browser Extension ⏳
 
-**Status: ⏳ Planned**
-
-Allow users to interact with CareerOS directly from supported job websites.
-
-### Planned Features
+Save job postings directly from supported job platforms.
 
 * [ ] Browser extension foundation
-* [ ] Job page detection
+* [ ] Job-page detection
 * [ ] Job description extraction
-* [ ] CareerOS authentication integration
-* [ ] Save job from browser
-* [ ] API integration
-* [ ] Extension UI
+* [ ] CareerOS authentication
+* [ ] One-click job saving
 * [ ] Supported-site handling
-* [ ] Tests
+* [ ] Automated tests
 
 ---
 
-## Phase 7 — Finalization
+## Phase 7 — Production Readiness ⏳
 
-**Status: ⏳ Planned**
-
-Prepare CareerOS for production use.
-
-### Planned Features
+Prepare CareerOS for real-world usage.
 
 * [ ] End-to-end testing
-* [ ] Accessibility review
+* [ ] Accessibility improvements
 * [ ] Performance optimization
 * [ ] Security hardening
 * [ ] Rate limiting
-* [ ] Production configuration
-* [ ] Deployment
-* [ ] Monitoring
-* [ ] Error tracking
-* [ ] Final documentation
+* [ ] Production deployment
+* [ ] Monitoring and error tracking
 * [ ] CI/CD improvements
-* [ ] Production readiness review
+* [ ] Final documentation
 
 ---
 
-## Development Strategy
+## Development Workflow
 
-Each phase should result in a stable project state.
-
-The general workflow is:
+Each phase follows the same workflow:
 
 ```text
 Plan
@@ -189,25 +194,11 @@ Test
   ↓
 Document
   ↓
-Run CI
+CI
   ↓
-Complete Phase
+Complete
   ↓
-Start Next Phase
+Next Phase
 ```
 
-A phase should not be considered complete until its required functionality, tests, quality checks, and documentation are in place.
-
----
-
-## Current Focus
-
-The current completed milestone is:
-
-**Phase 1 — Foundation**
-
-The next development milestone is:
-
-**Phase 2 — Core Application**
-
-Phase 2 will introduce the actual job application management functionality on top of the foundation established in Phase 1.
+Existing functionality must remain stable when introducing a new phase.
