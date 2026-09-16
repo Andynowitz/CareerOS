@@ -145,17 +145,67 @@ AI-generated analysis from Phase 4 may provide structured information used by th
 
 ---
 
-## Phase 6 — Browser Extension ⏳
+# Phase 6 — Application Intelligence & Workflow 🚧
 
-Save job postings directly from supported job platforms.
+Improve the job application workflow with intelligent insights,
+better tracking, and actionable application management.
 
-* [ ] Browser extension foundation
-* [ ] Job-page detection
-* [ ] Job description extraction
-* [ ] CareerOS authentication
-* [ ] One-click job saving
-* [ ] Supported-site handling
-* [ ] Automated tests
+### 6.1 — Application Dashboard
+- [ ] Review existing job/activity architecture
+- [ ] Define application dashboard requirements
+- [ ] Add application statistics
+- [ ] Add application status overview
+- [ ] Add recent activity overview
+- [ ] Add application pipeline
+- [ ] Add loading/error states
+- [ ] Add frontend tests
+
+### 6.2 — Application Timeline
+- [ ] Review existing JobActivity model
+- [ ] Define timeline event types
+- [ ] Improve activity timeline UI
+- [ ] Add activity creation from job detail
+- [ ] Add activity editing/deletion if appropriate
+- [ ] Add timeline filtering
+- [ ] Add frontend tests
+
+### 6.3 — Application Insights
+- [ ] Define deterministic application metrics
+- [ ] Add application funnel metrics
+- [ ] Add response-rate metrics
+- [ ] Add interview-rate metrics
+- [ ] Add offer-rate metrics
+- [ ] Add status transition analysis
+- [ ] Add backend tests
+
+### 6.4 — Job Application Assistant
+- [ ] Define assistant capabilities
+- [ ] Add job-specific application checklist
+- [ ] Add missing application information
+- [ ] Add recommended next actions
+- [ ] Add deadline/follow-up tracking
+- [ ] Add deterministic recommendations
+- [ ] Add frontend tests
+
+### 6.5 — Application Search & Filtering
+- [ ] Review existing job search
+- [ ] Add advanced filters
+- [ ] Add match-score filtering
+- [ ] Add application-status filtering
+- [ ] Add date filtering
+- [ ] Add sorting options
+- [ ] Add frontend tests
+
+### 6.6 — Integration & Quality
+- [ ] Run full backend test suite
+- [ ] Run full frontend test suite
+- [ ] Run linting
+- [ ] Run type checking
+- [ ] Run production build
+- [ ] Test complete application workflow
+- [ ] Verify existing Phase 1–5 functionality
+- [ ] Update documentation
+- [ ] Mark Phase 6 complete
 
 ---
 
