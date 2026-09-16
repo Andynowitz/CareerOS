@@ -5,12 +5,15 @@ import { useParams, useRouter } from "next/navigation";
 
 import {
   analyzeJob,
+  createJobMatch,
   getJob,
   getJobAnalysis,
   getJobAnalysisStatus,
+  getLatestJobMatch,
   updateJob,
   type Job,
   type JobAnalysis,
+  type JobMatch,
 } from "@/lib/jobs-api";
 
 import {
@@ -19,6 +22,11 @@ import {
   type JobActivity,
   type JobActivityType,
 } from "@/lib/job-activities-api";
+
+import {
+  getResumes,
+  type Resume,
+} from "@/lib/resumes-api";
 
 const ACTIVITY_TYPES: {
   value: JobActivityType;
@@ -75,6 +83,10 @@ function formatTaskStatus(status: string): string {
   }
 }
 
+function formatScore(score: number): string {
+  return `${Math.round(score)}%`;
+}
+
 export default function JobDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -85,9 +97,15 @@ export default function JobDetailPage() {
   const [activities, setActivities] = useState<JobActivity[]>([]);
   const [analysis, setAnalysis] = useState<JobAnalysis | null>(null);
 
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState("");
+  const [jobMatch, setJobMatch] = useState<JobMatch | null>(null);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(true);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isLoadingResumes, setIsLoadingResumes] = useState(true);
+  const [isLoadingMatch, setIsLoadingMatch] = useState(false);
 
   const [analysisStatus, setAnalysisStatus] = useState<string | null>(
     null,
@@ -95,6 +113,8 @@ export default function JobDetailPage() {
   const [analysisError, setAnalysisError] = useState<string | null>(
     null,
   );
+
+  const [matchError, setMatchError] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -176,7 +196,6 @@ export default function JobDetailPage() {
           setAnalysis(existingAnalysis);
         }
       } catch {
-        // A missing analysis is expected for a new job.
         if (!cancelled) {
           setAnalysis(null);
         }
@@ -195,6 +214,85 @@ export default function JobDetailPage() {
       cancelled = true;
     };
   }, [jobId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadResumes() {
+      try {
+        setIsLoadingResumes(true);
+        setMatchError(null);
+
+        const resumeData = await getResumes();
+
+        if (!cancelled) {
+          setResumes(resumeData);
+
+          if (resumeData.length > 0) {
+            const firstResume = resumeData[0];
+
+            if (firstResume) {
+              setSelectedResumeId(firstResume.id);
+            }
+          }
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setMatchError(
+            err instanceof Error
+              ? err.message
+              : "Failed to load resumes.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoadingResumes(false);
+        }
+      }
+    }
+
+    if (jobId) {
+      void loadResumes();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadLatestMatch() {
+      if (!selectedResumeId) {
+        setJobMatch(null);
+        return;
+      }
+
+      try {
+        const latestMatch = await getLatestJobMatch(
+          jobId,
+          selectedResumeId,
+        );
+
+        if (!cancelled) {
+          setJobMatch(latestMatch);
+        }
+      } catch {
+        if (!cancelled) {
+          setJobMatch(null);
+        }
+      }
+    }
+
+    if (jobId && selectedResumeId) {
+      void loadLatestMatch();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [jobId, selectedResumeId]);
 
   useEffect(() => {
     return () => {
@@ -259,6 +357,33 @@ export default function JobDetailPage() {
           : "Failed to start job analysis.",
       );
       setIsAnalyzing(false);
+    }
+  }
+
+  async function handleCreateMatch() {
+    if (!selectedResumeId) {
+      setMatchError("Please select a resume first.");
+      return;
+    }
+
+    try {
+      setIsLoadingMatch(true);
+      setMatchError(null);
+
+      const match = await createJobMatch(
+        jobId,
+        selectedResumeId,
+      );
+
+      setJobMatch(match);
+    } catch (err) {
+      setMatchError(
+        err instanceof Error
+          ? err.message
+          : "Failed to calculate job match.",
+      );
+    } finally {
+      setIsLoadingMatch(false);
     }
   }
 
@@ -628,6 +753,271 @@ export default function JobDetailPage() {
         )}
       </section>
 
+      {/* Job Match */}
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-2xl font-semibold">Job Match</h2>
+
+          <p className="text-sm text-gray-500">
+            Calculate how well a resume matches this job using the
+            deterministic matching engine.
+          </p>
+        </div>
+
+        <div className="rounded-lg border p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            <div className="flex-1">
+              <label
+                htmlFor="resume"
+                className="mb-1 block text-sm font-medium"
+              >
+                Resume
+              </label>
+
+              {isLoadingResumes ? (
+                <p className="text-sm text-gray-500">
+                  Loading resumes...
+                </p>
+              ) : resumes.length === 0 ? (
+                <p className="text-sm text-gray-500">
+                  No resumes available. Upload a resume first.
+                </p>
+              ) : (
+                <select
+                  id="resume"
+                  value={selectedResumeId}
+                  onChange={(event) => {
+                    setSelectedResumeId(event.target.value);
+                    setJobMatch(null);
+                    setMatchError(null);
+                  }}
+                  className="w-full rounded border px-3 py-2"
+                >
+                  {resumes.map((resume) => (
+                    <option
+                      key={resume.id}
+                      value={resume.id}
+                    >
+                      {resume.name} — v{resume.current_version}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => void handleCreateMatch()}
+              disabled={
+                isLoadingMatch ||
+                isLoadingResumes ||
+                resumes.length === 0 ||
+                !selectedResumeId
+              }
+              className="rounded bg-black px-4 py-2 text-sm text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLoadingMatch
+                ? "Calculating..."
+                : jobMatch
+                  ? "Recalculate Match"
+                  : "Calculate Match"}
+            </button>
+          </div>
+        </div>
+
+        {matchError && (
+          <div className="rounded-lg border border-red-300 bg-red-50 p-5 text-sm text-red-700">
+            {matchError}
+          </div>
+        )}
+
+        {jobMatch && (
+          <div className="space-y-6">
+            <div className="rounded-lg border p-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-center">
+                  <p className="text-4xl font-bold">
+                    {formatScore(jobMatch.score)}
+                  </p>
+
+                  <p className="text-sm text-gray-500">Overall Match</p>
+                </div>
+
+                <p className="text-xs text-gray-500">
+                  Calculated {formatDate(jobMatch.created_at)}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                [
+                  "Required Skills",
+                  jobMatch.required_skills_score,
+                ],
+                [
+                  "Preferred Skills",
+                  jobMatch.preferred_skills_score,
+                ],
+                [
+                  "Experience",
+                  jobMatch.experience_score,
+                ],
+                [
+                  "Education",
+                  jobMatch.education_score,
+                ],
+                [
+                  "Keywords",
+                  jobMatch.keywords_score,
+                ],
+              ].map(([label, score]) => (
+                <div
+                  key={label as string}
+                  className="rounded-lg border p-4"
+                >
+                  <p className="text-sm text-gray-500">
+                    {label as string}
+                  </p>
+
+                  <p className="mt-1 text-2xl font-semibold">
+                    {label === "Preferred Skills" &&
+                    jobMatch.matched_preferred_skills.length === 0 &&
+                    jobMatch.missing_preferred_skills.length === 0
+                      ? "Not specified"
+                      : formatScore((score as number) * 100)}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-lg border p-5">
+                <h3 className="font-semibold">
+                  Matched Required Skills
+                </h3>
+
+                {jobMatch.matched_required_skills.length === 0 ? (
+                  <p className="mt-2 text-sm text-gray-500">
+                    None.
+                  </p>
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {jobMatch.matched_required_skills.map(
+                      (skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border px-3 py-1 text-sm"
+                        >
+                          ✓ {skill}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-5">
+                <h3 className="font-semibold">
+                  Missing Required Skills
+                </h3>
+
+                {jobMatch.missing_required_skills.length === 0 ? (
+                  <p className="mt-2 text-sm text-gray-500">
+                    None.
+                  </p>
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {jobMatch.missing_required_skills.map(
+                      (skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border px-3 py-1 text-sm"
+                        >
+                          {skill}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-5">
+                <h3 className="font-semibold">
+                  Matched Preferred Skills
+                </h3>
+
+                {jobMatch.matched_preferred_skills.length === 0 ? (
+                  <p className="mt-2 text-sm text-gray-500">
+                    None.
+                  </p>
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {jobMatch.matched_preferred_skills.map(
+                      (skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border px-3 py-1 text-sm"
+                        >
+                          ✓ {skill}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-lg border p-5">
+                <h3 className="font-semibold">
+                  Missing Preferred Skills
+                </h3>
+
+                {jobMatch.missing_preferred_skills.length === 0 ? (
+                  <p className="mt-2 text-sm text-gray-500">
+                    None.
+                  </p>
+                ) : (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {jobMatch.missing_preferred_skills.map(
+                      (skill) => (
+                        <span
+                          key={skill}
+                          className="rounded-full border px-3 py-1 text-sm"
+                        >
+                          {skill}
+                        </span>
+                      ),
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-lg border p-5">
+              <h3 className="font-semibold">
+                Why this score?
+              </h3>
+
+              {jobMatch.explanations.length === 0 ? (
+                <p className="mt-2 text-sm text-gray-500">
+                  No explanation available.
+                </p>
+              ) : (
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
+                  {jobMatch.explanations.map(
+                    (explanation) => (
+                      <li key={explanation}>
+                        {explanation}
+                      </li>
+                    ),
+                  )}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Add activity */}
       <section className="space-y-4">
         <h2 className="text-2xl font-semibold">Add Activity</h2>
@@ -756,4 +1146,3 @@ export default function JobDetailPage() {
     </main>
   );
 }
-

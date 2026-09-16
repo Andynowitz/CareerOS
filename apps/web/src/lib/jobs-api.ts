@@ -158,3 +158,79 @@ export async function getJobAnalysisStatus(
 
   return handleResponse<AnalysisTaskResponse>(response);
 }
+
+
+export interface JobMatch {
+  id: string;
+  job_id: string;
+  resume_id: string;
+  score: number;
+
+  required_skills_score: number;
+  preferred_skills_score: number;
+  experience_score: number;
+  education_score: number;
+  keywords_score: number;
+
+  matched_required_skills: string[];
+  missing_required_skills: string[];
+  matched_preferred_skills: string[];
+  missing_preferred_skills: string[];
+
+  explanations: string[];
+
+  created_at: string;
+}
+
+export interface JobMatchHistory {
+  matches: JobMatch[];
+}
+
+export async function createJobMatch(
+  jobId: string,
+  resumeId: string,
+): Promise<JobMatch> {
+  const response = await fetch(
+    `${API_V1_URL}/jobs/${jobId}/matches`,
+    {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        resume_id: resumeId,
+      }),
+    },
+  );
+
+  return handleResponse<JobMatch>(response);
+}
+
+export async function getLatestJobMatch(
+  jobId: string,
+  resumeId: string,
+): Promise<JobMatch> {
+  const response = await fetch(
+    `${API_V1_URL}/jobs/${jobId}/matches/latest?resume_id=${encodeURIComponent(resumeId)}`,
+    {
+      credentials: "include",
+    },
+  );
+
+  return handleResponse<JobMatch>(response);
+}
+
+export async function getJobMatchHistory(
+  jobId: string,
+  resumeId: string,
+): Promise<JobMatchHistory> {
+  const response = await fetch(
+    `${API_V1_URL}/jobs/${jobId}/matches/history?resume_id=${encodeURIComponent(resumeId)}`,
+    {
+      credentials: "include",
+    },
+  );
+
+  return handleResponse<JobMatchHistory>(response);
+}

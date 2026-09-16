@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import router
 from app.core.config import get_settings
+from app.api.v1.endpoints.job_matches import router as job_matches_router
 
 settings = get_settings()
 
@@ -31,3 +32,4 @@ app.add_middleware(
 )
 
 app.include_router(router)
+app.include_router(job_matches_router, prefix="/api/v1")
