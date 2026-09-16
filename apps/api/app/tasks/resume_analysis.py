@@ -10,11 +10,10 @@ from sqlalchemy.pool import NullPool
 from app.ai.analyzers.resume_analyzer import ResumeAnalyzer
 from app.ai.client import AIClient
 from app.core.config import get_settings
-from app.models.resume import Resume
+from app.models.resume import Resume, ResumeVersion
 from app.repositories.resume_analysis import ResumeAnalysisRepository
 from app.services.resume_analysis import ResumeAnalysisService
 from app.tasks.celery_app import celery_app
-from app.models.resume import Resume, ResumeVersion
 
 from typing import Any
 

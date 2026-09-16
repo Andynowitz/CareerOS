@@ -67,18 +67,12 @@ AI-powered analysis of jobs and resumes.
 
 ---
 
-# Phase 5 — Job Matching 🚧
+# Phase 5 — Job Matching ✅
 
 Build a deterministic and explainable matching system between jobs and resumes.
 
 ### 5.1 — Analysis & Design
 
-* [ ] Analyze existing `Job` model
-* [ ] Analyze existing `JobAnalysis`
-* [ ] Analyze existing `Resume` model
-* [ ] Analyze existing `ResumeVersion`
-* [ ] Analyze existing `ResumeAnalysis`
-* [ ] Analyze existing Phase 4 AI insights
 * [x] Define the matching domain model
 * [x] Define matching inputs
 * [x] Define matching rules
@@ -128,15 +122,15 @@ Build a deterministic and explainable matching system between jobs and resumes.
 
 ### 5.6 — Integration & Quality
 
-* [ ] Run full backend test suite
-* [ ] Run full frontend test suite
-* [ ] Run linting
-* [ ] Run type checking
-* [ ] Run production build
-* [ ] Test complete matching workflow
-* [ ] Verify existing Phase 1–4 functionality
-* [ ] Update documentation
-* [ ] Mark Phase 5 complete
+* [x] Run full backend test suite
+* [x] Run full frontend test suite
+* [x] Run linting
+* [x] Run type checking
+* [x] Run production build
+* [x] Test complete matching workflow
+* [x] Verify existing Phase 1–4 functionality
+* [x] Update documentation
+* [x] Mark Phase 5 complete
 
 ### Design Goal
 

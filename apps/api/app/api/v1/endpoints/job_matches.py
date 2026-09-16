@@ -57,14 +57,14 @@ async def create_job_match(
             detail="Resume not found",
         )
 
-    result = await session.execute(
+    job_analysis_result = await session.execute(
         select(JobAnalysis)
         .where(JobAnalysis.job_id == job_id)
         .order_by(JobAnalysis.created_at.desc())
         .limit(1)
     )
 
-    job_analysis = result.scalar_one_or_none()
+    job_analysis = job_analysis_result.scalar_one_or_none()
 
     if job_analysis is None:
         raise HTTPException(
@@ -72,14 +72,14 @@ async def create_job_match(
             detail="Job analysis not found",
         )
 
-    result = await session.execute(
+    resume_analysis_result = await session.execute(
         select(ResumeAnalysis)
         .where(ResumeAnalysis.resume_id == request.resume_id)
         .order_by(ResumeAnalysis.created_at.desc())
         .limit(1)
     )
 
-    resume_analysis = result.scalar_one_or_none()
+    resume_analysis = resume_analysis_result.scalar_one_or_none()
 
     if resume_analysis is None:
         raise HTTPException(

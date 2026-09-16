@@ -9,7 +9,7 @@ from app.matching.config import (
 )
 from app.matching.models import JobMatchInput, ResumeMatchInput
 from app.matching.result import MatchResult
-from app.matching.skill_matcher import SkillMatcher
+from app.matching.skill_matcher import SkillMatchResult, SkillMatcher
 
 
 @dataclass(frozen=True)
@@ -377,14 +377,14 @@ class MatchingEngine:
 
         return matched / len(keywords)
 
-    @staticmethod
     def _build_explanations(
-        required,
-        preferred,
+        self,
+        required: SkillMatchResult,
+        preferred: SkillMatchResult,
         experience_score: float,
         education_score: float,
         keywords_score: float,
-    ) -> tuple[str, ...]:
+    ) -> tuple[str, ...]:       
         explanations: list[str] = []
 
         required_total = (
