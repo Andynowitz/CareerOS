@@ -1,52 +1,49 @@
 # CareerOS Roadmap
 
-CareerOS is developed in incremental phases. Each phase should leave the project in a stable, tested state before the next phase begins.
+CareerOS is developed incrementally, with each phase building on a tested and stable foundation.
 
 ---
 
 ## Phase 1 — Foundation ✅
 
-Project and infrastructure foundation.
+Core project and infrastructure setup.
 
-* [x] pnpm monorepo
-* [x] Next.js frontend
-* [x] FastAPI backend
-* [x] PostgreSQL
-* [x] Redis + Celery
-* [x] MinIO
-* [x] Better Auth
-* [x] Docker Compose
-* [x] Testing and code-quality tooling
-* [x] GitHub Actions CI
+* pnpm/Turborepo monorepo
+* Next.js frontend
+* FastAPI backend
+* PostgreSQL
+* Redis + Celery
+* MinIO
+* Better Auth
+* Docker Compose
+* Testing and CI
 
 ---
 
 ## Phase 2 — Job Management ✅
 
-Core job application tracking.
+Core application tracking.
 
-* [x] Job CRUD
-* [x] Application statuses
-* [x] Job activity tracking
-* [x] Job detail views
-* [x] Authentication and resource ownership
-* [x] Backend tests
-* [x] Frontend tests
+* Job CRUD
+* Application statuses
+* Job activity tracking
+* Job detail views
+* Authentication and resource ownership
+* Backend and frontend tests
 
 ---
 
 ## Phase 3 — Resume Management ✅
 
-Resume storage, versioning, and processing.
+Resume storage and processing.
 
-* [x] PDF/DOCX uploads
-* [x] File validation
-* [x] Text extraction
-* [x] Resume versions
-* [x] MinIO storage
-* [x] Resume API
-* [x] Resume UI
-* [x] Automated tests
+* PDF/DOCX uploads
+* File validation
+* Text extraction
+* Resume versioning
+* MinIO storage
+* Resume API and UI
+* Automated tests
 
 ---
 
@@ -54,195 +51,78 @@ Resume storage, versioning, and processing.
 
 AI-powered analysis of jobs and resumes.
 
-* [x] Job description analysis
-* [x] Resume analysis
-* [x] Structured job insights
-* [x] AI-generated match insights
-* [x] OpenAI integration
-* [x] Celery-based asynchronous processing
-* [x] Redis task coordination
-* [x] Persistent analysis results
-* [x] Analysis status and history
-* [x] Automated tests
+* Job description analysis
+* Resume analysis
+* Structured job insights
+* AI-generated insights
+* Asynchronous processing
+* Persistent analysis history
+* Automated tests
 
 ---
 
-# Phase 5 — Job Matching ✅
+## Phase 5 — Job Matching ✅
 
-Build a deterministic and explainable matching system between jobs and resumes.
+Deterministic and explainable job/resume matching.
 
-### 5.1 — Analysis & Design
+* Skill matching and normalization
+* Required/preferred skill handling
+* Experience and education matching
+* Deterministic scoring
+* Match explanations
+* Match persistence and history
+* Backend API and frontend integration
+* Automated testing
 
-* [x] Define the matching domain model
-* [x] Define matching inputs
-* [x] Define matching rules
-* [x] Define scoring weights
-* [x] Define skill normalization strategy
-* [x] Define explainable match output
+### Design Goals
 
-### 5.2 — Matching Engine
+The matching engine is:
 
-* [x] Implement matching domain
-* [x] Implement skill matching
-* [x] Implement required/preferred skill handling
-* [x] Implement experience matching
-* [x] Implement education matching
-* [x] Implement score calculation
-* [x] Implement match explanations
-* [x] Add unit tests
-
-### 5.3 — Persistence
-
-* [x] Create match database model
-* [x] Create database migration
-* [x] Implement match repository
-* [x] Implement match persistence
-* [x] Implement match history
-* [x] Add database tests
-
-### 5.4 — Backend API
-
-* [x] Define matching API
-* [x] Implement match creation
-* [x] Implement match retrieval
-* [x] Implement match history
-* [x] Add authorization and ownership checks
-* [x] Add API tests
-* [x] Update API documentation
-
-### 5.5 — Frontend
-- [x] Add match score to job views
-- [x] Add match breakdown
-- [x] Add matched skills
-- [x] Add missing skills
-- [x] Add match explanation
-- [x] Add resume selection
-- [x] Add loading/error states
-- [x] Add frontend tests
-
-### 5.6 — Integration & Quality
-
-* [x] Run full backend test suite
-* [x] Run full frontend test suite
-* [x] Run linting
-* [x] Run type checking
-* [x] Run production build
-* [x] Test complete matching workflow
-* [x] Verify existing Phase 1–4 functionality
-* [x] Update documentation
-* [x] Mark Phase 5 complete
-
-### Design Goal
-
-The matching engine should be:
-
-* **Deterministic** — same inputs produce the same result
+* **Deterministic** — identical inputs produce identical results
 * **Reproducible** — results can be recalculated
-* **Explainable** — users can understand why a match received its score
-* **Testable** — matching rules can be covered with automated tests
-
-AI-generated analysis from Phase 4 may provide structured information used by the matcher, but the final matching score should be calculated by defined and testable rules.
+* **Explainable** — users can understand the score
+* **Testable** — matching rules are covered by automated tests
 
 ---
 
-# Phase 6 — Application Intelligence & Workflow 🚧
+## Phase 6 — Application Intelligence & Workflow ✅
 
-Improve the job application workflow with intelligent insights,
-better tracking, and actionable application management.
+Improved application tracking and workflow management.
 
-### 6.1 — Application Dashboard
-- [ ] Review existing job/activity architecture
-- [ ] Define application dashboard requirements
-- [ ] Add application statistics
-- [ ] Add application status overview
-- [ ] Add recent activity overview
-- [ ] Add application pipeline
-- [ ] Add loading/error states
-- [ ] Add frontend tests
-
-### 6.2 — Application Timeline
-- [ ] Review existing JobActivity model
-- [ ] Define timeline event types
-- [ ] Improve activity timeline UI
-- [ ] Add activity creation from job detail
-- [ ] Add activity editing/deletion if appropriate
-- [ ] Add timeline filtering
-- [ ] Add frontend tests
-
-### 6.3 — Application Insights
-- [ ] Define deterministic application metrics
-- [ ] Add application funnel metrics
-- [ ] Add response-rate metrics
-- [ ] Add interview-rate metrics
-- [ ] Add offer-rate metrics
-- [ ] Add status transition analysis
-- [ ] Add backend tests
-
-### 6.4 — Job Application Assistant
-- [ ] Define assistant capabilities
-- [ ] Add job-specific application checklist
-- [ ] Add missing application information
-- [ ] Add recommended next actions
-- [ ] Add deadline/follow-up tracking
-- [ ] Add deterministic recommendations
-- [ ] Add frontend tests
-
-### 6.5 — Application Search & Filtering
-- [ ] Review existing job search
-- [ ] Add advanced filters
-- [ ] Add match-score filtering
-- [ ] Add application-status filtering
-- [ ] Add date filtering
-- [ ] Add sorting options
-- [ ] Add frontend tests
-
-### 6.6 — Integration & Quality
-- [ ] Run full backend test suite
-- [ ] Run full frontend test suite
-- [ ] Run linting
-- [ ] Run type checking
-- [ ] Run production build
-- [ ] Test complete application workflow
-- [ ] Verify existing Phase 1–5 functionality
-- [ ] Update documentation
-- [ ] Mark Phase 6 complete
+* Application dashboard
+* Application statistics and funnel metrics
+* Activity timeline and filtering
+* Application insights
+* Job-specific application assistant
+* Follow-up tracking
+* Advanced job filtering
+* Match-score filtering
+* Sorting and status/date filters
+* Frontend and backend testing
+* Production build verification
 
 ---
 
 ## Phase 7 — Production Readiness ⏳
 
-Prepare CareerOS for real-world usage.
+Prepare CareerOS for production use.
 
-* [ ] End-to-end testing
-* [ ] Accessibility improvements
-* [ ] Performance optimization
-* [ ] Security hardening
-* [ ] Rate limiting
-* [ ] Production deployment
-* [ ] Monitoring and error tracking
-* [ ] CI/CD improvements
-* [ ] Final documentation
+* End-to-end testing
+* Accessibility improvements
+* Performance optimization
+* Security hardening
+* Rate limiting
+* Production deployment
+* Monitoring and error tracking
+* CI/CD improvements
+* Final documentation
 
 ---
 
 ## Development Workflow
 
-Each phase follows the same workflow:
+Each phase follows:
 
-```text
-Plan
-  ↓
-Implement
-  ↓
-Test
-  ↓
-Document
-  ↓
-CI
-  ↓
-Complete
-  ↓
-Next Phase
-```
+**Plan → Implement → Test → Document → CI → Complete**
 
-Existing functionality must remain stable when introducing a new phase.
+Existing functionality should remain stable as new phases are introduced.

@@ -1,54 +1,40 @@
 # CareerOS
 
-CareerOS is a full-stack career management platform for tracking job applications, managing resumes, and generating AI-powered career insights.
+**CareerOS is a full-stack career management platform for organizing job applications, resumes, and AI-powered career insights.**
 
-## Status
+Built with a modern TypeScript/Python stack, CareerOS combines application tracking, resume management, deterministic job matching, and intelligent workflow assistance in one platform.
 
-| Phase | Status |
-|---|---|
-| Phase 1 — Foundation | ✅ Complete |
-| Phase 2 — Core Application | ✅ Complete |
-| Phase 3 — Resume Management | ✅ Complete |
-| Phase 4 — AI Analysis | ✅ Complete |
-| Phase 5 — Job Matching | 🚧 Next |
-| Phase 6 — Browser Extension | ⏳ Planned |
-| Phase 7 — Finalization | ⏳ Planned |
+## Current Status
 
-## Stack
+**Phase 6 — Application Intelligence & Workflow: Complete ✅**
 
-- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
-- **Backend:** FastAPI, Python 3.13, Pydantic
-- **Database:** PostgreSQL 17, SQLAlchemy 2, Alembic
-- **Authentication:** Better Auth
-- **Background jobs:** Redis 7 + Celery
-- **Storage:** MinIO (S3-compatible)
-- **Testing:** Vitest, React Testing Library, pytest
-- **Quality:** ESLint, Ruff, mypy
-- **Infrastructure:** Docker Compose
-- **CI:** GitHub Actions
+Implemented functionality includes:
 
-## Features
+* Job and application management
+* Application activity timeline
+* Resume upload, versioning, and processing
+* AI-powered job and resume analysis
+* Deterministic job/resume matching
+* Application dashboards and insights
+* Application assistant and follow-up tracking
+* Advanced job filtering and sorting
 
-### Job Management
-- Job CRUD with user ownership
-- Application statuses
-- Activity tracking
-- Job detail views
-- Protected API endpoints
+**Next:** Phase 7 — Production Readiness
 
-### Resume Management
-- PDF and DOCX uploads
-- File validation and size limits
-- Text extraction
-- Resume versions
-- MinIO-backed file storage
+## Tech Stack
 
-### AI Analysis
-- Job description analysis
-- Resume analysis
-- AI-generated job insights
-- Asynchronous Celery processing
-- Persistent analysis results and history
+| Layer           | Technology                                     |
+| --------------- | ---------------------------------------------- |
+| Frontend        | Next.js 15, React 19, TypeScript, Tailwind CSS |
+| Backend         | FastAPI, Python 3.13, Pydantic                 |
+| Database        | PostgreSQL 17, SQLAlchemy 2, Alembic           |
+| Authentication  | Better Auth                                    |
+| Background Jobs | Redis 7, Celery                                |
+| Object Storage  | MinIO                                          |
+| Testing         | Vitest, React Testing Library, pytest          |
+| Quality         | ESLint, Ruff, mypy                             |
+| Infrastructure  | Docker Compose                                 |
+| CI              | GitHub Actions                                 |
 
 ## Architecture
 
@@ -66,16 +52,16 @@ FastAPI
    └── MinIO
 ```
 
-The repository is organized as a Turborepo/pnpm monorepo:
+CareerOS is organized as a pnpm/Turborepo monorepo:
 
 ```text
 careeros/
 ├── apps/
-│   ├── web/          # Next.js application
-│   ├── api/          # FastAPI backend
-│   └── extension/    # Browser extension
-├── packages/         # Shared packages
-├── docs/             # Technical documentation
+│   ├── web/        # Next.js frontend
+│   ├── api/        # FastAPI backend
+│   └── extension/  # Browser extension
+├── packages/       # Shared packages
+├── docs/           # Documentation
 └── docker-compose.yml
 ```
 
@@ -83,16 +69,16 @@ careeros/
 
 ### Requirements
 
-- Docker Desktop
-- Node.js 22 LTS
-- pnpm 9
+* Docker Desktop
+* Node.js 22 LTS
+* pnpm 9
 
 ### Setup
 
 ```bash
 pnpm install
 cp .env.example .env
-docker compose up --build
+docker compose up -d --build
 ```
 
 Apply database migrations:
@@ -101,49 +87,45 @@ Apply database migrations:
 docker compose exec api alembic upgrade head
 ```
 
-### Local Services
+The application is then available at:
 
-| Service | URL |
-|---|---|
-| Web | http://localhost:3000 |
-| API | http://localhost:8000 |
-| Swagger | http://localhost:8000/docs |
-| ReDoc | http://localhost:8000/redoc |
-| MinIO | http://localhost:9001 |
+* Web: `http://localhost:3000`
+* API: `http://localhost:8000`
+* API Docs: `http://localhost:8000/docs`
 
 ## Testing
 
+Frontend:
+
 ```bash
-# Frontend
 pnpm --filter web test
 pnpm --filter web lint
 pnpm --filter web build
-
-# Backend
-cd apps/api
-pytest
-ruff check .
-mypy app
 ```
 
-Or run the workspace checks:
+Backend:
 
 ```bash
-pnpm lint
-pnpm test
-pnpm build
+docker compose exec api pytest -q
 ```
 
 ## Documentation
 
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system structure and responsibilities
-- [`docs/API.md`](docs/API.md) — API endpoints and conventions
-- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — local development and quality checks
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — implementation roadmap
+* [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture and design
+* [`docs/API.md`](docs/API.md) — API overview and conventions
+* [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — development workflow
+* [`docs/ROADMAP.md`](docs/ROADMAP.md) — project roadmap
 
 ## Engineering Principles
 
-CareerOS emphasizes clean architecture, strict typing, validated inputs, backend authorization, resource ownership, testable components, and reproducible development environments.
+CareerOS emphasizes:
+
+* Clean architecture
+* Strict typing
+* Explicit validation
+* Backend authorization and resource ownership
+* Testable business logic
+* Reproducible development environments
 
 ## License
 

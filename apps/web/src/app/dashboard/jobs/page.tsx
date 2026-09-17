@@ -10,6 +10,7 @@ import {
   analyzeJob,
   getJobAnalysis,
   getJobAnalysisStatus,
+  getLatestJobMatch,
   type Job,
   type JobAnalysis,
 } from "@/lib/jobs-api";
@@ -21,13 +22,19 @@ import {
 
 import JobForm from "./job-form";
 
-type SortOption =
-  | "newest"
-  | "oldest"
-  | "title-asc"
-  | "title-desc"
-  | "company-asc"
-  | "company-desc";
+import {
+  getResumes,
+  type Resume,
+} from "@/lib/resumes-api";
+
+import {
+  filterJobs,
+  sortJobs,
+  type DateFilter,
+  type MatchScoreFilter,
+  type SortOption,
+} from "@/lib/job-filters";
+
 
 const SORT_OPTIONS: {
   value: SortOption;
@@ -54,12 +61,25 @@ export default function JobsPage() {
   const [statusFilter, setStatusFilter] = useState<JobStatus | "all">(
     "all",
   );
-
+  
+  const [dateFilter, setDateFilter] =
+    useState<DateFilter>("all");
   const [sortOption, setSortOption] =
     useState<SortOption>("newest");
 
   const router = useRouter();
   
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [selectedResumeId, setSelectedResumeId] = useState("");
+  const [matchScoreFilter, setMatchScoreFilter] =
+    useState<MatchScoreFilter>("all");
+
+  const [matchScores, setMatchScores] = useState<
+    Record<string, number>
+  >({});
+  const [matchScoresLoading, setMatchScoresLoading] =
+    useState(false);
+
   async function loadJobs() {
     try {
       setError(null);
@@ -134,53 +154,73 @@ export default function JobsPage() {
     void loadJobs();
   }, []);
 
+  useEffect(() => {
+    async function loadResumes() {
+      try {
+        const data = await getResumes();
+
+        setResumes(data);
+
+        const firstResume = data[0];
+
+        if (firstResume) {
+          setSelectedResumeId(firstResume.id);
+        }
+      } catch {
+        setResumes([]);
+      }
+    }
+
+    void loadResumes();
+  }, []);
+
+
+  useEffect(() => {
+    if (!selectedResumeId || jobs.length === 0) {
+      setMatchScores({});
+      return;
+    }
+
+    async function loadMatchScores() {
+      setMatchScoresLoading(true);
+
+      const scores: Record<string, number> = {};
+
+      await Promise.all(
+        jobs.map(async (job) => {
+          try {
+            const match = await getLatestJobMatch(
+              job.id,
+              selectedResumeId,
+            );
+
+            scores[job.id] = match.score;
+          } catch {
+            // No match available for this job.
+          }
+        }),
+      );
+
+      setMatchScores(scores);
+      setMatchScoresLoading(false);
+    }
+
+    void loadMatchScores();
+  }, [jobs, selectedResumeId]);
+
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      !normalizedSearchQuery ||
-      job.title.toLowerCase().includes(normalizedSearchQuery) ||
-      job.company.toLowerCase().includes(normalizedSearchQuery) ||
-      (job.location?.toLowerCase().includes(normalizedSearchQuery) ??
-        false);
-
-    const matchesStatus =
-      statusFilter === "all" || job.status === statusFilter;
-
-    return matchesSearch && matchesStatus;
+  const filteredJobs = filterJobs(jobs, {
+    searchQuery,
+    statusFilter,
+    dateFilter,
+    matchScoreFilter,
+    matchScores,
   });
 
-  const sortedJobs = [...filteredJobs].sort((a, b) => {
-    switch (sortOption) {
-      case "newest":
-        return (
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
-        );
+  const sortedJobs = sortJobs(filteredJobs, sortOption);
 
-      case "oldest":
-        return (
-          new Date(a.created_at).getTime() -
-          new Date(b.created_at).getTime()
-        );
-
-      case "title-asc":
-        return a.title.localeCompare(b.title);
-
-      case "title-desc":
-        return b.title.localeCompare(a.title);
-
-      case "company-asc":
-        return a.company.localeCompare(b.company);
-
-      case "company-desc":
-        return b.company.localeCompare(a.company);
-
-      default:
-        return 0;
-    }
-  });
-
+  
   if (isLoading) {
     return (
       <main className="p-8">
@@ -272,6 +312,61 @@ export default function JobsPage() {
         </select>
 
         <select
+          value={dateFilter}
+          onChange={(event) =>
+            setDateFilter(event.target.value as DateFilter)
+          }
+          className="rounded-md border px-4 py-2"
+        >
+          <option value="all">All dates</option>
+          <option value="7-days">Last 7 days</option>
+          <option value="30-days">Last 30 days</option>
+          <option value="90-days">Last 90 days</option>
+          <option value="older">Older than 90 days</option>
+        </select>
+        
+        <select
+          value={selectedResumeId}
+          onChange={(event) => {
+            setSelectedResumeId(event.target.value);
+            setMatchScoreFilter("all");
+          }}
+          disabled={resumes.length === 0}
+          className="rounded-md border px-4 py-2"
+        >
+          <option value="">
+            {resumes.length === 0
+              ? "No resumes available"
+              : "Select resume"}
+          </option>
+
+          {resumes.map((resume) => (
+            <option key={resume.id} value={resume.id}>
+              {resume.name}
+            </option>
+          ))}
+        </select>
+
+
+        <select
+          value={matchScoreFilter}
+          onChange={(event) =>
+            setMatchScoreFilter(
+              event.target.value as MatchScoreFilter,
+            )
+          }
+          disabled={!selectedResumeId || matchScoresLoading}
+          className="rounded-md border px-4 py-2"
+        >
+          <option value="all">All match scores</option>
+          <option value="60">60%+ match</option>
+          <option value="70">70%+ match</option>
+          <option value="80">80%+ match</option>
+          <option value="90">90%+ match</option>
+        </select>
+
+
+        <select
           value={sortOption}
           onChange={(event) =>
             setSortOption(event.target.value as SortOption)
@@ -289,17 +384,24 @@ export default function JobsPage() {
       {sortedJobs.length === 0 ? (
         <div className="mt-8 rounded-lg border p-8 text-center">
           <h2 className="font-medium">
-            {searchQuery || statusFilter !== "all"
+            {searchQuery ||
+              statusFilter !== "all" ||
+              dateFilter !== "all" ||
+              matchScoreFilter !== "all"
               ? "No matching jobs"
               : "No jobs yet"}
           </h2>
 
           <p className="mt-2 text-sm text-muted-foreground">
-            {searchQuery || statusFilter !== "all"
-              ? "Try changing your search or filter."
+            {searchQuery ||
+            statusFilter !== "all" ||
+            dateFilter !== "all" ||
+            matchScoreFilter !== "all"
+              ? "Try changing your search or filters."
               : "Add your first job application to get started."}
           </p>
         </div>
+
       ) : (
         <div className="mt-8 space-y-4">
           {sortedJobs.map((job) => (
@@ -319,6 +421,13 @@ export default function JobsPage() {
                   </p>
                 </div>
 
+                {selectedResumeId &&
+                  matchScores[job.id] !== undefined && (
+                    <p className="mt-2 text-sm font-medium">
+                      Match score:{" "}
+                      {Math.round(matchScores[job.id] ?? 0)}%
+                    </p>
+                )}
                 <select
                   value={job.status}
                   onChange={(event) =>

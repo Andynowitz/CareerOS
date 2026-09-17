@@ -8,6 +8,13 @@ from app.api.v1.endpoints.job_activities import router as job_activities_router
 from app.api.v1.endpoints.jobs import router as jobs_router
 from app.db.session import get_db_session
 from app.api.v1.endpoints import resumes
+from app.api.v1.endpoints.application_insights import (
+    router as application_insights_router,
+)
+
+from app.api.v1.endpoints.application_assistant import (
+    router as application_assistant_router,
+)
 
 router = APIRouter(prefix="/api/v1")
 
@@ -15,7 +22,9 @@ router.include_router(health_router)
 router.include_router(auth_router)
 router.include_router(jobs_router)
 router.include_router(job_activities_router)
-router.include_router(resumes.router,)
+router.include_router(resumes.router)
+router.include_router(application_insights_router)
+router.include_router(application_assistant_router)
 
 @router.get("/db-check", tags=["system"])
 async def database_check(

@@ -233,4 +233,4 @@ export async function getJobMatchHistory(
   );
 
   return handleResponse<JobMatchHistory>(response);
-}
+} 

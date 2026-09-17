@@ -28,6 +28,16 @@ import {
   type Resume,
 } from "@/lib/resumes-api";
 
+import {
+  filterActivities,
+  type ActivityFilter,
+} from "@/lib/job-activity-filters";
+
+import {
+  getApplicationAssistant,
+  type ApplicationAssistant,
+} from "@/lib/application-assistant-api";
+
 const ACTIVITY_TYPES: {
   value: JobActivityType;
   label: string;
@@ -95,6 +105,8 @@ export default function JobDetailPage() {
 
   const [job, setJob] = useState<Job | null>(null);
   const [activities, setActivities] = useState<JobActivity[]>([]);
+  const [activityFilter, setActivityFilter] =
+    useState<ActivityFilter>("all");
   const [analysis, setAnalysis] = useState<JobAnalysis | null>(null);
 
   const [resumes, setResumes] = useState<Resume[]>([]);
@@ -129,6 +141,10 @@ export default function JobDetailPage() {
     null,
   );
 
+  const [applicationAssistant, setApplicationAssistant] =
+    useState<ApplicationAssistant | null>(null);
+  const [assistantLoading, setAssistantLoading] = useState(true);
+  const [assistantError, setAssistantError] = useState<string | null>(null);
   async function handleStatusChange(newStatus: Job["status"]) {
     if (!job || newStatus === job.status) {
       return;
@@ -153,6 +169,30 @@ export default function JobDetailPage() {
       );
     }
   }
+
+  const id = params.id as string;
+  
+  useEffect(() => {
+    async function loadApplicationAssistant() {
+      try {
+        setAssistantError(null);
+
+        const data = await getApplicationAssistant(id);
+
+        setApplicationAssistant(data);
+      } catch (err) {
+        setAssistantError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load application assistant.",
+        );
+      } finally {
+        setAssistantLoading(false);
+      }
+    }
+
+    void loadApplicationAssistant();
+  }, [id]);
 
   useEffect(() => {
     async function loadData() {
@@ -451,6 +491,11 @@ export default function JobDetailPage() {
       </main>
     );
   }
+
+  const filteredActivities = filterActivities(
+    activities,
+    activityFilter,
+  );
 
   return (
     <main className="mx-auto max-w-4xl space-y-8 p-6">
@@ -1090,50 +1135,237 @@ export default function JobDetailPage() {
         </form>
       </section>
 
+      
+      <section className="rounded-lg border bg-white p-6 shadow-sm">
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold">
+            Application Assistant
+          </h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Actionable information for managing this application.
+          </p>
+        </div>
+
+        {assistantLoading && (
+          <p className="text-sm text-gray-500">
+            Loading application assistant...
+          </p>
+        )}
+
+        {assistantError && (
+          <p className="text-sm text-red-600">
+            {assistantError}
+          </p>
+        )}
+
+        {!assistantLoading &&
+          !assistantError &&
+          applicationAssistant && (
+            <div className="space-y-6">
+              {applicationAssistant.missing_information.length > 0 && (
+                <div>
+                  <h3 className="mb-2 font-medium">
+                    Missing information
+                  </h3>
+
+                  <ul className="list-disc space-y-1 pl-5 text-sm text-gray-600">
+                    {applicationAssistant.missing_information.map(
+                      (item) => (
+                        <li key={item}>{item}</li>
+                      ),
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              <div>
+                <h3 className="mb-3 font-medium">
+                  Application checklist
+                </h3>
+
+                <div className="space-y-2">
+                  {applicationAssistant.checklist.map((item) => (
+                    <div
+                      key={item.item}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span>
+                        {item.completed ? "✓" : "○"}
+                      </span>
+
+                      <span
+                        className={
+                          item.completed
+                            ? "text-gray-500 line-through"
+                            : "text-gray-900"
+                        }
+                      >
+                        {item.item}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="mb-3 font-medium">
+                  Next actions
+                </h3>
+
+                <ul className="space-y-2">
+                  {applicationAssistant.next_actions.map(
+                    (action) => (
+                      <li
+                        key={action}
+                        className="rounded-md bg-gray-50 p-3 text-sm"
+                      >
+                        {action}
+                      </li>
+                    ),
+                  )}
+                </ul>
+              </div>
+
+              <div>
+                <h3 className="mb-2 font-medium">
+                  Follow-up
+                </h3>
+
+                <p className="text-sm">
+                  {applicationAssistant.follow_up_needed
+                    ? "A follow-up may be appropriate."
+                    : "No follow-up is currently needed."}
+                </p>
+
+                {applicationAssistant.last_activity_at && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Last activity:{" "}
+                    {new Date(
+                      applicationAssistant.last_activity_at,
+                    ).toLocaleString()}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+      </section>
+
       {/* Activity timeline */}
       <section className="space-y-4">
-        <h2 className="text-2xl font-semibold">Activity</h2>
+        <div>
+          <h2 className="text-2xl font-semibold">
+            Activity Timeline
+          </h2>
 
-        {activities.length === 0 ? (
-          <p className="text-gray-500">No activity yet.</p>
+          <p className="text-sm text-gray-500">
+            Track everything that happened during this application.
+          </p>
+        </div>
+
+        {/* Activity filters */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setActivityFilter("all")}
+            className={`rounded border px-3 py-1.5 text-sm ${
+              activityFilter === "all"
+                ? "bg-black text-white"
+                : "bg-white"
+            }`}
+          >
+            All
+          </button>
+
+          {ACTIVITY_TYPES.map((type) => (
+            <button
+              key={type.value}
+              type="button"
+              onClick={() => setActivityFilter(type.value)}
+              className={`rounded border px-3 py-1.5 text-sm ${
+                activityFilter === type.value
+                  ? "bg-black text-white"
+                  : "bg-white"
+              }`}
+            >
+              {type.label}
+            </button>
+          ))}
+
+          <button
+            type="button"
+            onClick={() => setActivityFilter("status_changed")}
+            className={`rounded border px-3 py-1.5 text-sm ${
+              activityFilter === "status_changed"
+                ? "bg-black text-white"
+                : "bg-white"
+            }`}
+          >
+            Status Changes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActivityFilter("created")}
+            className={`rounded border px-3 py-1.5 text-sm ${
+              activityFilter === "created"
+                ? "bg-black text-white"
+                : "bg-white"
+            }`}
+          >
+            Created
+          </button>
+        </div>
+
+        {filteredActivities.length === 0 ? (
+          <div className="rounded-lg border p-5">
+            <p className="text-gray-500">
+              No activities match the selected filter.
+            </p>
+          </div>
         ) : (
-          <div className="space-y-4">
-            {activities.map((activity) => (
+          <div className="relative space-y-6 pl-6">
+            <div className="absolute bottom-0 left-2 top-0 w-px bg-gray-200" />
+
+            {filteredActivities.map((activity) => (
               <article
                 key={activity.id}
-                className="rounded-lg border p-5"
+                className="relative rounded-lg border bg-white p-5"
               >
-                <div className="flex flex-col justify-between gap-2 sm:flex-row">
+                <div className="absolute -left-[1.65rem] top-6 h-3 w-3 rounded-full border-2 border-white bg-black" />
+
+                <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
                   <div>
                     <h3 className="font-semibold">
                       {formatActivityType(activity.type)}
                     </h3>
 
-                    {activity.description && (
-                      <p className="mt-1 whitespace-pre-wrap text-gray-700">
-                        {activity.description}
-                      </p>
-                    )}
+                    <time className="text-sm text-gray-500">
+                      {formatDate(activity.created_at)}
+                    </time>
                   </div>
-
-                  <time className="text-sm text-gray-500">
-                    {formatDate(activity.created_at)}
-                  </time>
                 </div>
 
                 {activity.type === "status_changed" &&
                   activity.old_status &&
                   activity.new_status && (
-                    <p className="mt-3 text-sm">
+                    <div className="mt-3 rounded-md bg-gray-50 p-3 text-sm">
                       <span className="capitalize">
                         {activity.old_status}
                       </span>
+
                       {" → "}
-                      <span className="capitalize">
+
+                      <span className="font-medium capitalize">
                         {activity.new_status}
                       </span>
-                    </p>
+                    </div>
                   )}
+
+                {activity.description && (
+                  <p className="mt-3 whitespace-pre-wrap text-gray-700">
+                    {activity.description}
+                  </p>
+                )}
               </article>
             ))}
           </div>

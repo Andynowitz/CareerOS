@@ -47,3 +47,18 @@ class JobActivityRepository:
         )
 
         return result.scalar_one_or_none()
+
+    async def get_all_for_user(
+        self,
+        user_id: str,
+    ) -> list[JobActivity]:
+        result = await self.session.execute(
+            select(JobActivity)
+            .where(
+                JobActivity.user_id == user_id,
+            )
+            .order_by(JobActivity.created_at.desc())
+        )
+
+        return list(result.scalars().all())
+    
