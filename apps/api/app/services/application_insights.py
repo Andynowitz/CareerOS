@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from collections import Counter
+from typing import Counter as CounterType
 
-from app.models.job import JobStatus
-from app.models.job_activity import JobActivityType
+from app.models.job import Job, JobStatus
+from app.models.job_activity import JobActivity, JobActivityType
 
 class ApplicationInsightsService:
     @staticmethod
     def calculate(
-        jobs: list,
-        activities: list,
-    ) -> dict:
+        jobs: list[Job],
+        activities: list[JobActivity],
+    ) -> dict[str, object]:
         total_applications = len(jobs)
 
         status_counts = Counter(
@@ -77,7 +78,7 @@ class ApplicationInsightsService:
             else 0.0
         )
 
-        transition_counts = Counter()
+        transition_counts: CounterType[str] = Counter()
 
         for activity in activities:
             if (
