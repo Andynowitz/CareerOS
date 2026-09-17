@@ -3,8 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from app.models.job import JobStatus
-from app.models.job_activity import JobActivity, JobActivityType
-
+from app.models.job_activity import JobActivity
 
 class ApplicationAssistantService:
     @staticmethod
