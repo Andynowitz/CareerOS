@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CareerOS",
-  description: "Career and job application management platform",
+  title: "CareerOS | Your career, organized",
+  description: "A focused workspace for managing your job search.",
 };
 
 export default function RootLayout({

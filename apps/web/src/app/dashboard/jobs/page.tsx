@@ -21,6 +21,7 @@ import {
 } from "@/lib/job-types";
 
 import JobForm from "./job-form";
+import JobDescription from "@/components/job-description";
 
 import {
   getResumes,
@@ -448,9 +449,9 @@ export default function JobsPage() {
               </div>
 
               {job.description && (
-                <p className="mt-4 text-sm">
-                  {job.description}
-                </p>
+                <div className="mt-4 text-sm">
+                  <JobDescription description={job.description} compact />
+                </div>
               )}
 
               {job.url && (

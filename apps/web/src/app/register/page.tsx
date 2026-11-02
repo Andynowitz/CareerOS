@@ -33,27 +33,15 @@ export default function RegisterPage() {
   }
 
   return (
-    <main
-      style={{
-        maxWidth: 420,
-        margin: "80px auto",
-        padding: 24,
-      }}
-    >
-      <h1>Create your CareerOS account</h1>
-
-      <p>
-        Already have an account?{" "}
-        <Link href="/login">Sign in</Link>
-      </p>
+    <main className="auth-page">
+      <section className="auth-aside"><Link href="/" className="brand"><span className="brand-mark">C</span> CareerOS</Link><div><h1>Build a search that moves with you.</h1><p>Track the details, focus on the moments that matter, and make your next move with confidence.</p></div><small>© CareerOS</small></section>
+      <section className="auth-form-wrap"><div className="auth-card">
+      <h1>Create your workspace</h1>
+      <p>Start organizing your job search in minutes.</p>
 
       <form
         onSubmit={handleSubmit}
-        style={{
-          display: "grid",
-          gap: 16,
-          marginTop: 24,
-        }}
+        className="auth-form"
       >
         <label>
           Name
@@ -99,6 +87,8 @@ export default function RegisterPage() {
           {loading ? "Creating account..." : "Create account"}
         </button>
       </form>
+      <p className="auth-switch">Already have an account? <Link href="/login">Sign in</Link></p>
+      </div></section>
     </main>
   );
 }

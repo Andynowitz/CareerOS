@@ -37,6 +37,7 @@ import {
   getApplicationAssistant,
   type ApplicationAssistant,
 } from "@/lib/application-assistant-api";
+import JobDescription from "@/components/job-description";
 
 const ACTIVITY_TYPES: {
   value: JobActivityType;
@@ -586,7 +587,7 @@ export default function JobDetailPage() {
             <div className="sm:col-span-2">
               <p className="text-sm text-gray-500">Description</p>
 
-              <p className="whitespace-pre-wrap">{job.description}</p>
+              <JobDescription description={job.description} />
             </div>
           )}
         </div>
@@ -742,11 +743,11 @@ export default function JobDetailPage() {
                   None identified.
                 </p>
               ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
+                <div className="mt-3 keywords-list">
                   {analysis.keywords.map((keyword) => (
                     <span
                       key={keyword}
-                      className="rounded-full border px-3 py-1 text-sm"
+                      className="keyword-chip rounded-full border px-3 py-1 text-sm"
                     >
                       {keyword}
                     </span>
